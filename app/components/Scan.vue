@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { merge, type SliceData } from '~~/utils/slicing'
 import { scan } from 'qr-scanner-wechat'
 
 const props = withDefaults(defineProps<{
@@ -29,9 +30,8 @@ watchEffect(() => {
 
 const results = defineModel<Set<string>>('results', { default: new Set() })
 
+const error = ref<any>()
 const shutterCount = ref(0)
-
-const error = ref<any>('')
 const video = shallowRef<HTMLVideoElement>()
 onMounted(async () => {
   try {
@@ -43,6 +43,7 @@ onMounted(async () => {
         deviceId: selectedCamera.value,
       },
     })
+
     video.value!.srcObject = stream
     video.value!.play()
   }
@@ -55,6 +56,12 @@ onMounted(async () => {
   )
 })
 
+const chunks: SliceData[] = reactive([])
+const length = computed(() => chunks.find(i => i?.[1])?.[1] || 0)
+const id = computed(() => chunks.find(i => i?.[0])?.[0] || 0)
+const picked = computed(() => Array.from({ length: length.value }, (_, idx) => chunks[idx]))
+const dataUrl = ref<string>()
+
 async function scanFrame() {
   shutterCount.value += 1
   const canvas = document.createElement('canvas')
@@ -66,6 +73,21 @@ async function scanFrame() {
 
   if (result?.text) {
     results.value.add(result.text)
+    const data = JSON.parse(result.text) as SliceData
+    if (Array.isArray(data)) {
+      chunks[data[2]] = data
+      if (!length.value)
+        return
+      if (picked.value.every(i => !!i)) {
+        try {
+          const merged = await merge(picked.value as SliceData[])
+          dataUrl.value = URL.createObjectURL(new Blob([merged], { type: 'application/octet-stream' }))
+        }
+        catch (e) {
+          error.value = e
+        }
+      }
+    }
   }
 }
 </script>
@@ -84,6 +106,19 @@ async function scanFrame() {
         {{ item.label }}
       </button>
     </div>
-    <p>Error: {{ error }}</p>
+    <p>shutterCount: {{ shutterCount }}</p>
+    <a v-if="dataUrl" :href="dataUrl" download="foo.png">Download</a>
+    <pre v-if="error" text-red v-text="error" />
+    <video ref="video" />
+    <div flex="~ gap-1">
+      <div
+        v-for="x, idx in picked" :key="idx"
+        h-5 w-5
+        border="~ gray:10 rounded"
+        :class="x ? 'bg-green' : '' "
+      />
+    </div>
+    <div>{{ { length, id } }}</div>
+    <div>{{ chunks }}</div>
   </div>
 </template>
