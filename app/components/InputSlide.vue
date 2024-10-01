@@ -106,10 +106,9 @@ watch(max, (val) => {
 <template>
   <div
     flex="~ row"
-    w-full appearance-none rounded-lg border-none p-1 space-x-2
+    w-full appearance-none rounded-lg border-none space-x-2
     text="sm zinc-300"
-    outline="transparent 2px offset-4px dashed"
-    transition="outline duration-200 ease"
+    outline="transparent"
   >
     <label
       class="qrs-slider qrs-slider"

@@ -28,8 +28,10 @@ onUnmounted(() => intervalId && clearInterval(intervalId))
 
 <template>
   <div flex flex-col items-center>
-    <p>{{ activeIndex }}/{{ svgList.length }}</p>
-    <div class="relative h-full max-h-80vh max-w-80vh w-full">
+    <p mb-4>
+      {{ activeIndex }}/{{ svgList.length }}
+    </p>
+    <div class="relative h-full w-full">
       <div
         v-for="svg, idx of svgList"
         :key="idx"

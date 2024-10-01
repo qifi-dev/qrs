@@ -1,29 +1,54 @@
 <script lang="ts" setup>
-import { merge, slice } from '~~/utils/slicing'
+import { slice } from '~~/utils/slicing'
+
+enum ReadPhase {
+  Idle,
+  Reading,
+  Chunking,
+  Ready,
+}
 
 const count = ref(10)
-const speed = ref(50)
-const data = ref(Array.from({ length: count.value }, (_, i) => `hello world ${i}`))
+const demoData = ref(false)
+const speed = ref(100)
+const readPhase = ref<ReadPhase>(ReadPhase.Idle)
+const data = ref<Array<any>>([])
 
-async function onFileChange(e: Event) {
-  const target = e.target as HTMLInputElement
-  const file = target.files?.[0]
-  if (!file)
+if (demoData.value) {
+  data.value = Array.from({ length: count.value }, (_, i) => `hello world ${i}`)
+}
+
+async function onFileChange(file?: File) {
+  if (!file) {
+    readPhase.value = ReadPhase.Idle
+    data.value = []
+
     return
+  }
 
+  readPhase.value = ReadPhase.Reading
   const content = await file.arrayBuffer()
+  readPhase.value = ReadPhase.Chunking
   const chunks = await slice(content)
+  readPhase.value = ReadPhase.Ready
   data.value = chunks.map(i => JSON.stringify(i))
 }
 </script>
 
 <template>
-  <div>
-    <div flex="~ col sm:row" gap-2 px="4 sm:6" py-2>
-      <input type="file" @change="onFileChange">
+  <div px="4" flex="~ col" h-full w-full gap-6 py-2>
+    <div flex="~ col sm:row" gap-2>
+      <InputFile @file="onFileChange">
+        <div flex px-4 py-2 text="neutral-600 dark:neutral-400">
+          <div i-carbon:document-add text-lg />
+          <p font-semi-bold pl-2 text-nowrap>
+            <span>Chang File</span>
+          </p>
+        </div>
+      </InputFile>
       <div w-full inline-flex flex-row items-center>
         <span min-w-40>
-          <span pr-2 text-zinc-400>Speed</span>
+          <span pr-2 text-neutral-400>Speed</span>
           <span font-mono>{{ speed.toFixed(0) }}ms</span>
         </span>
         <InputSlide
@@ -35,6 +60,19 @@ async function onFileChange(e: Event) {
         />
       </div>
     </div>
-    <Generate :speed="speed" :data="data" />
+    <div v-if="readPhase === ReadPhase.Ready" h-full w-full flex justify-center>
+      <Generate :speed="speed" :data="data" h-full max-w-80vh w-full />
+    </div>
+    <InputFile
+      v-else
+      h-full w-full
+      text="neutral-600 dark:neutral-400"
+      @file="onFileChange"
+    >
+      <div i-carbon:document-add text-2xl />
+      <p font-semi-bold pl-4 text-2xl>
+        <span>Choose</span>
+      </p>
+    </InputFile>
   </div>
 </template>
