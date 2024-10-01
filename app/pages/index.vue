@@ -1,27 +1,18 @@
-<script setup lang="ts">
-definePageMeta({
-  layout: 'home',
-})
+<script lang="ts" setup>
+const count = ref(10)
+const speed = ref(250)
 
-const online = useOnline()
+const data = Array.from({ length: count.value }, (_, i) => `hello world ${i}`)
 </script>
 
 <template>
-  <div>
-    <Logos mb-6 />
-    <Suspense>
-      <ClientOnly>
-        <PageView v-if="online" />
-        <div v-else text-gray:80>
-          You're offline
-        </div>
-      </ClientOnly>
-      <template #fallback>
-        <div italic op50>
-          <span animate-pulse>Loading...</span>
-        </div>
-      </template>
-    </Suspense>
-    <InputEntry />
+  <div py-10>
+    <Generate :speed="speed" :data="data" />
+    <div mt-10>
+      <label>
+        <input v-model.number="speed" type="range" step="100" min="30" max="1000">
+        <span>Speed: {{ speed }}ms</span>
+      </label>
+    </div>
   </div>
 </template>
