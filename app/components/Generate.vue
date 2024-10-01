@@ -8,7 +8,7 @@ const props = withDefaults(defineProps<{
   speed: 250,
 })
 
-const minVersion = computed(() => encode(props.data[0]! || '').version)
+const minVersion = computed(() => encode(props.data[0]! || '', { ecc: 'L' }).version)
 const svgList = computed(() => props.data.map(content => renderSVG(content, { border: 0, minVersion: minVersion.value })))
 const activeIndex = ref(0)
 watch(() => props.data, () => activeIndex.value = 0)

@@ -5,10 +5,7 @@ const results = ref(new Set<string>())
 </script>
 
 <template>
-  <div px-4 py-10 space-y-10>
-    <h1 text-4xl>
-      Scan
-    </h1>
+  <div px-4 pt-4 space-y-10>
     <Scan v-model:results="results" :speed="speed" />
     <div max-w-150 w-full inline-flex flex-row items-center>
       <span min-w-40>
