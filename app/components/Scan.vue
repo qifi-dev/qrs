@@ -11,22 +11,44 @@ const props = withDefaults(defineProps<{
   height: 512,
 })
 
+const { devices } = useDevicesList({
+  requestPermissions: true,
+  constraints: {
+    audio: false,
+    video: true,
+  },
+})
+
+const cameras = computed(() => devices.value.filter(i => i.kind === 'videoinput'))
+const selectedCamera = ref(cameras.value[0]?.deviceId)
+
+watchEffect(() => {
+  if (!selectedCamera.value)
+    selectedCamera.value = cameras.value[0]?.deviceId
+})
+
 const results = defineModel<Set<string>>('results', { default: new Set() })
 
 const shutterCount = ref(0)
 
-const stream = await navigator.mediaDevices.getUserMedia({
-  audio: false,
-  video: {
-    width: props.width,
-    height: props.height,
-  },
-})
-
+const error = ref<any>('')
 const video = shallowRef<HTMLVideoElement>()
-onMounted(() => {
-  video.value!.srcObject = stream
-  video.value!.play()
+onMounted(async () => {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: false,
+      video: {
+        width: props.width,
+        height: props.height,
+        deviceId: selectedCamera.value,
+      },
+    })
+    video.value!.srcObject = stream
+    video.value!.play()
+  }
+  catch (e) {
+    error.value = e
+  }
   useIntervalFn(
     () => scanFrame(),
     () => props.speed,
@@ -49,6 +71,19 @@ async function scanFrame() {
 </script>
 
 <template>
-  <p>shutterCount: {{ shutterCount }}</p>
-  <video ref="video" />
+  <div flex flex-col items-center gap10>
+    <p>shutterCount: {{ shutterCount }}</p>
+    <video ref="video" max-w-600px />
+    <div flex-flow flex gap-4>
+      cameras
+      <button
+        v-for="item of cameras" :key="item.deviceId" :class="{
+          'text-blue': selectedCamera === item.deviceId,
+        }" class="border rounded-xl px2 py1 shadow-sm" @click="selectedCamera = item.deviceId"
+      >
+        {{ item.label }}
+      </button>
+    </div>
+    <p>Error: {{ error }}</p>
+  </div>
 </template>
