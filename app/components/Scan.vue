@@ -12,6 +12,20 @@ const props = withDefaults(defineProps<{
   height: 512,
 })
 
+// Bandwidth calculation variables
+const bytesReceivedInLastSecond = ref(0)
+const currentBandwidth = ref(0)
+const currentBandwidthFormatted = computed(() => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'unit',
+    unit: 'kilobyte-per-second',
+    unitDisplay: 'short',
+  }).format(currentBandwidth.value)
+})
+
+let lastUpdateTime = 0
+let animationFrameId: number | null = null
+
 const { devices } = useDevicesList({
   requestPermissions: true,
   constraints: {
@@ -43,6 +57,7 @@ function setFps() {
 const error = ref<any>()
 const shutterCount = ref(0)
 const video = shallowRef<HTMLVideoElement>()
+
 onMounted(async () => {
   watch([() => props.width, () => props.height, selectedCamera], () => {
     disconnectCamera()
@@ -53,6 +68,16 @@ onMounted(async () => {
     () => scanFrame(),
     () => props.speed,
   )
+})
+
+onMounted(() => {
+  animationFrameId = requestAnimationFrame(updateBandwidth)
+})
+
+onUnmounted(() => {
+  if (animationFrameId !== null) {
+    cancelAnimationFrame(animationFrameId)
+  }
 })
 
 function disconnectCamera() {
@@ -79,6 +104,27 @@ async function connectCamera() {
   }
 }
 
+function updateBandwidth(timestamp: number) {
+  const now = timestamp
+  const elapsedTime = now - lastUpdateTime
+
+  if (elapsedTime >= 1000) {
+    // Calculate bandwidth for the last second
+    currentBandwidth.value = Number.parseFloat(
+      (
+        (bytesReceivedInLastSecond.value / 1024)
+        / (elapsedTime / 1000)
+      ).toFixed(2),
+    )
+
+    // Reset for the next second
+    bytesReceivedInLastSecond.value = 0
+    lastUpdateTime = now
+  }
+
+  requestAnimationFrame(updateBandwidth)
+}
+
 const chunks: SliceData[] = reactive([])
 const length = computed(() => chunks.find(i => i?.[1])?.[1] || 0)
 const id = computed(() => chunks.find(i => i?.[0])?.[0] || 0)
@@ -100,6 +146,13 @@ async function scanFrame() {
     const data = JSON.parse(result.text) as SliceData
     if (Array.isArray(data)) {
       chunks[data[2]] = data
+
+      // Bandwidth calculation
+      {
+        const chunkSize = data[4].length
+        bytesReceivedInLastSecond.value += chunkSize
+      }
+
       if (!length.value)
         return
       if (picked.value.every(i => !!i)) {
@@ -137,7 +190,7 @@ watch(() => results.value.size, (size) => {
     <div relative h-full max-h-150 max-w-150 w-full>
       <video ref="video" h-full w-full />
       <p absolute bottom-1 right-1 border rounded-md bg-black px2 py1 text-white font-mono shadow>
-        {{ fps.toFixed(0) }}hz | {{ shutterCount }}
+        {{ fps.toFixed(0) }}hz | {{ shutterCount }} | {{ currentBandwidthFormatted }}
       </p>
     </div>
     <div flex="~ gap-1 wrap" max-w-150 w-full>
