@@ -27,6 +27,10 @@ const video = shallowRef<HTMLVideoElement>()
 onMounted(() => {
   video.value!.srcObject = stream
   video.value!.play()
+  useIntervalFn(
+    () => scanFrame(),
+    () => props.speed,
+  )
 })
 
 async function scanFrame() {
@@ -42,12 +46,6 @@ async function scanFrame() {
     results.value.add(result.text)
   }
 }
-
-let intervalId: any
-watch(() => props.speed, () => {
-  intervalId && clearInterval(intervalId)
-  intervalId = setInterval(scanFrame, props.speed)
-}, { immediate: true })
 </script>
 
 <template>
