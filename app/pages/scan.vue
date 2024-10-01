@@ -1,35 +1,29 @@
 <script lang="ts" setup>
-import { scan } from 'qr-scanner-wechat'
+const speed = ref(100)
 
-const stream = await navigator.mediaDevices.getUserMedia({
-  audio: false,
-  video: {
-    width: 512,
-    height: 512,
-  },
-})
-
-const video = shallowRef<HTMLVideoElement>()
-onMounted(() => {
-  video.value!.srcObject = stream
-  video.value!.play()
-})
-
-async function scanFrame() {
-  const canvas = document.createElement('canvas')
-  canvas.width = video.value!.videoWidth
-  canvas.height = video.value!.videoHeight
-  const ctx = canvas.getContext('2d')!
-  ctx.drawImage(video.value!, 0, 0, canvas.width, canvas.height)
-  const result = await scan(canvas)
-
-  if (result?.text)
-    alert(result?.text)
-}
-
-setInterval(scanFrame, 100) // scan one frame every 100ms
+const results = ref(new Set<string>())
 </script>
 
 <template>
-  <video ref="video" />
+  <div py-10>
+    <h1 text-4xl>
+      Scan
+    </h1>
+    <Scan v-model:results="results" :speed="speed" />
+    <div mt-10>
+      <label>
+        <input v-model.number="speed" type="range" step="100" min="30" max="1000">
+        <span>Speed: {{ speed }}ms</span>
+      </label>
+    </div>
+    <h2 text-3xl>
+      Results: {{ results.size }}
+    </h2>
+    <div>
+      <div v-for="(item, index) of results" :key="index" font-mono>
+        ID:{{ index }}:<br>
+        {{ item }}
+      </div>
+    </div>
+  </div>
 </template>
