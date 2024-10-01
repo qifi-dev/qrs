@@ -7,6 +7,8 @@ export default nuxt(
     {
       unocss: true,
       formatters: true,
+      markdown: false,
+      yaml: false,
     },
   ),
 )
