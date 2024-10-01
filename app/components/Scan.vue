@@ -1,9 +1,15 @@
 <script lang="ts" setup>
 import { scan } from 'qr-scanner-wechat'
 
-const props = defineProps<{
-  speed: number
-}>()
+const props = withDefaults(defineProps<{
+  speed?: number
+  width?: number
+  height?: number
+}>(), {
+  speed: 34,
+  width: 512,
+  height: 512,
+})
 
 const results = defineModel<Set<string>>('results', { default: new Set() })
 
@@ -12,8 +18,8 @@ const shutterCount = ref(0)
 const stream = await navigator.mediaDevices.getUserMedia({
   audio: false,
   video: {
-    width: 512,
-    height: 512,
+    width: props.width,
+    height: props.height,
   },
 })
 
