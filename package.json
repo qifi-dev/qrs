@@ -35,5 +35,9 @@
   },
   "resolutions": {
     "@typescript-eslint/utils": "^8.6.0"
+  },
+  "dependencies": {
+    "qr-scanner-wechat": "^0.1.3",
+    "uqr": "^0.1.2"
   }
 }
