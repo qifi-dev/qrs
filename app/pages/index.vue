@@ -2,7 +2,7 @@
 import { merge, slice } from '~~/utils/slicing'
 
 const count = ref(10)
-const speed = ref(100)
+const speed = ref(50)
 const data = ref(Array.from({ length: count.value }, (_, i) => `hello world ${i}`))
 
 async function onFileChange(e: Event) {
@@ -24,7 +24,7 @@ async function onFileChange(e: Event) {
       <div w-full inline-flex flex-row items-center>
         <span min-w-40>
           <span pr-2 text-zinc-400>Speed</span>
-          <span>{{ speed.toFixed(0) }}ms</span>
+          <span font-mono>{{ speed.toFixed(0) }}ms</span>
         </span>
         <InputSlide
           v-model="speed"

@@ -32,6 +32,14 @@ const results = defineModel<Set<string>>('results', { default: new Set() })
 
 let stream: MediaStream | undefined
 
+let timestamp = 0
+const fps = ref(0)
+function setFps() {
+  const now = Date.now()
+  fps.value = 1000 / (now - timestamp)
+  timestamp = now
+}
+
 const error = ref<any>()
 const shutterCount = ref(0)
 const video = shallowRef<HTMLVideoElement>()
@@ -87,6 +95,7 @@ async function scanFrame() {
   const result = await scan(canvas)
 
   if (result?.text) {
+    setFps()
     results.value.add(result.text)
     const data = JSON.parse(result.text) as SliceData
     if (Array.isArray(data)) {
@@ -105,6 +114,11 @@ async function scanFrame() {
     }
   }
 }
+
+watch(() => results.value.size, (size) => {
+  if (!size)
+    chunks.length = 0
+})
 </script>
 
 <template>
@@ -123,10 +137,10 @@ async function scanFrame() {
     <div relative h-full max-h-150 max-w-150 w-full>
       <video ref="video" h-full w-full />
       <p absolute bottom-1 right-1 border rounded-md bg-black px2 py1 text-white font-mono shadow>
-        {{ shutterCount }}
+        {{ fps.toFixed(0) }}hz | {{ shutterCount }}
       </p>
     </div>
-    <div flex="~ gap-1">
+    <div flex="~ gap-1 wrap" max-w-150 w-full>
       <div
         v-for="x, idx in picked" :key="idx"
         h-5 w-5
@@ -135,6 +149,6 @@ async function scanFrame() {
       />
     </div>
     <div>{{ { length, id } }}</div>
-    <div>{{ chunks }}</div>
+    <!-- <div>{{ chunks }}</div> -->
   </div>
 </template>
