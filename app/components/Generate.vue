@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { renderSVG } from 'uqr'
+import { encode, renderSVG } from 'uqr'
 
 const props = withDefaults(defineProps<{
   data: string[]
@@ -8,13 +8,10 @@ const props = withDefaults(defineProps<{
   speed: 250,
 })
 
-const svgList = computed(() => props.data.map((content, i) => ({
-  id: i,
-  svg: renderSVG(content),
-})))
+const minVersion = computed(() => encode(props.data[0]! || '').version)
+const svgList = computed(() => props.data.map(content => renderSVG(content, { border: 0, minVersion: minVersion.value })))
 const activeIndex = ref(0)
 watch(() => props.data, () => activeIndex.value = 0)
-const activeSvg = computed(() => svgList.value[activeIndex.value])
 
 let intervalId: any
 function initInterval() {
@@ -32,6 +29,31 @@ onUnmounted(() => intervalId && clearInterval(intervalId))
 <template>
   <div flex flex-col items-center>
     <p>{{ activeIndex }}/{{ svgList.length }}</p>
-    <div class="h-full max-h-50vh max-w-50vh w-full" v-html="activeSvg?.svg" />
+    <div class="relative h-full max-h-80vh max-w-80vh w-full">
+      <div
+        v-for="svg, idx of svgList"
+        :key="idx"
+        :class="{ hidden: idx !== activeIndex }"
+        absolute inset-0 h-full w-full
+        v-html="svg"
+      />
+      <div
+        class="arc" absolute inset-0 z-10
+        :style="{ '--deg': `${(activeIndex + 1) * 360 / svgList.length}deg` }"
+      />
+    </div>
   </div>
 </template>
+
+<style>
+.arc {
+  aspect-ratio: 1;
+  box-sizing: border-box;
+  border-radius: 50%;
+  background: #285655;
+  mix-blend-mode: lighten;
+  mask:
+    linear-gradient(#000 0 0) content-box intersect,
+    conic-gradient(#000 var(--deg), #0000 0);
+}
+</style>
