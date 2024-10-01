@@ -1,4 +1,5 @@
-import { compress, compressToBase64, decompress, decompressFromBase64 } from 'lz-string'
+import { fromUint8Array, toUint8Array } from 'js-base64'
+import { compressToBase64, decompressFromBase64 } from 'lz-string'
 import { hash as getHash } from 'ohash'
 
 export type SliceData = [
@@ -9,14 +10,12 @@ export type SliceData = [
   chunk: string,
 ]
 
-function arrayBufferToBase64(buffer: ArrayBuffer): Promise<string> {
-  const blob = new Blob([buffer], { type: 'text/plain; charset=utf-8' })
-  return blob.text()
+async function arrayBufferToBase64(buffer: ArrayBuffer): Promise<string> {
+  return fromUint8Array(new Uint8Array(buffer))
 }
 
-function base64ToArrayBuffer(str: string): Promise<ArrayBuffer> {
-  const blob = new Blob([str], { type: 'text/plain; charset=utf-8' })
-  return blob.arrayBuffer()
+async function base64ToArrayBuffer(str: string): Promise<ArrayBuffer> {
+  return toUint8Array(str).buffer
 }
 
 export async function slice(input: string | ArrayBuffer, chunkSize = 256): Promise<SliceData[]> {
@@ -54,5 +53,6 @@ export async function merge(slices: SliceData[]): Promise<string | ArrayBuffer> 
   if (hash !== targetHash) {
     throw new Error('Hash mismatch')
   }
+
   return data
 }

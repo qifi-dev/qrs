@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { slice } from '~~/utils/slicing'
+import { merge, slice } from '~~/utils/slicing'
 
 const count = ref(10)
 
@@ -20,6 +20,7 @@ async function onFileChange(e: Event) {
   const file = target.files?.[0]
   if (!file)
     return
+
   const content = await file.arrayBuffer()
   const chunks = await slice(content)
   data.value = chunks.map(i => JSON.stringify(i))

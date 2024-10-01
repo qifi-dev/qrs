@@ -92,7 +92,7 @@ watch(max, (val) => {
   </div>
 </template>
 
-<style less>
+<style scoped less>
 .qrs-slider {
   --qrs-slider-height: 24px;
   --qrs-slider-shadow-color: #aeaeaecd;
@@ -262,17 +262,5 @@ watch(max, (val) => {
   /** Shift right thumb */
   margin-right: calc(0 - var(--qrs-slider-track-progress-padding));
   cursor: col-resize;
-}
-</style>
-
-<style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.2s ease-in-out;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
 }
 </style>
