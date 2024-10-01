@@ -106,7 +106,6 @@ watch(max, (val) => {
 <template>
   <div
     flex="~ row"
-    bg="zinc-200/50 dark:zinc-800/50"
     w-full appearance-none rounded-lg border-none p-1 space-x-2
     text="sm zinc-300"
     outline="transparent 2px offset-4px dashed"
@@ -136,25 +135,25 @@ watch(max, (val) => {
 <style scoped less>
 .qrs-slider {
   --qrs-slider-height: 24px;
-  --qrs-slider-shadow-color: #aeaeaecd;
+  --qrs-slider-shadow-color: #8b8b8b4d;
 
   --qrs-slider-thumb-height: 24px;
   --qrs-slider-thumb-width: 24px;
   --qrs-slider-thumb-border-radius: 6px;
-  --qrs-slider-thumb-color: #ffffff;
+  --qrs-slider-thumb-color: #fcfcfc;
 
   --qrs-slider-track-height: calc(var(--qrs-slider-height) - var(--qrs-slider-track-progress-padding) * 2);
   --qrs-slider-track-border-radius: 6px;
-  --qrs-slider-track-color: #ffffff;
+  --qrs-slider-track-color: #e3e3e3;
 
-  --qrs-slider-track-progress-color: #ffffff;
+  --qrs-slider-track-progress-color: #828282;
   --qrs-slider-track-progress-padding: 0px;
 }
 
 .dark .qrs-slider {
-  --qrs-slider-shadow-color: #ffffff28;
-  --qrs-slider-thumb-color: #c6c6c6;
-  --qrs-slider-track-color: #3e3e3e;
+  --qrs-slider-shadow-color: #bebebe30;
+  --qrs-slider-thumb-color: #d2d2d2;
+  --qrs-slider-track-color: #343434;
   --qrs-slider-track-progress-color: #868686;
 }
 
