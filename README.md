@@ -2,4 +2,5 @@
 
 Stream data through multiple QRCodes
 
-<video src="https://assets-storage.guii.ai/qrs-demo.mp4" width="290px" loop />
+https://github.com/user-attachments/assets/5328d238-0f4e-4eb6-80ec-deb59d2e9897
+
