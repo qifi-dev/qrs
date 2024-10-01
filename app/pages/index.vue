@@ -2,17 +2,7 @@
 import { merge, slice } from '~~/utils/slicing'
 
 const count = ref(10)
-
-const speedValue = ref(100)
-const speed = computed({
-  get: () => {
-    return speedValue.value * 100
-  },
-  set: (val: number) => {
-    speedValue.value = val / 100
-  },
-})
-
+const speed = ref(100)
 const data = ref(Array.from({ length: count.value }, (_, i) => `hello world ${i}`))
 
 async function onFileChange(e: Event) {
@@ -34,17 +24,17 @@ async function onFileChange(e: Event) {
       <div w-full inline-flex flex-row items-center>
         <span min-w-40>
           <span pr-2 text-zinc-400>Speed</span>
-          <span>{{ (speed / 100).toFixed(0) }}ms</span>
+          <span>{{ speed.toFixed(0) }}ms</span>
         </span>
         <InputSlide
           v-model="speed"
-          :step="1"
-          :min="3000"
-          :max="100000"
+          :min="30"
+          :max="1000"
+          smooth
           w-full flex-1
         />
       </div>
     </div>
-    <Generate :speed="speed / 100" :data="data" />
+    <Generate :speed="speed" :data="data" />
   </div>
 </template>

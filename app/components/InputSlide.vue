@@ -8,6 +8,7 @@ const props = withDefaults(defineProps<{
   min?: number
   max?: number
   step?: number
+  smooth?: boolean
   formatter?: (arg: number) => string
 }>(), {
   name: 'Slider',
@@ -22,17 +23,36 @@ const emits = defineEmits<{
 }>()
 
 const inputSliderRef = ref<HTMLInputElement | null>(null)
-const inputValue = ref(props.modelValue)
-const min = ref(props.min)
-const max = ref(props.max)
+const inputValue = ref(0)
+if (props.smooth) {
+  inputValue.value = props.modelValue * 100
+}
+else {
+  inputValue.value = props.modelValue
+}
+
+const min = computed(() => {
+  if (props.smooth) {
+    return props.min * 100
+  }
+
+  return props.min
+})
+const max = computed(() => {
+  if (props.smooth) {
+    return props.max * 100
+  }
+
+  return props.max
+})
 
 onMounted(() => {
   if (!inputSliderRef.value)
     return
 
   inputSliderRef.value.style.setProperty('--qrs-slider-value', inputValue.value.toString())
-  inputSliderRef.value.style.setProperty('--qrs-slider-min', props.min ? props.min.toString() : '0')
-  inputSliderRef.value.style.setProperty('--qrs-slider-max', props.max ? props.max.toString() : '100')
+  inputSliderRef.value.style.setProperty('--qrs-slider-min', min.value.toString())
+  inputSliderRef.value.style.setProperty('--qrs-slider-max', max.value.toString())
   inputSliderRef.value.addEventListener('input', () => {
     if (!inputSliderRef.value)
       return
@@ -41,23 +61,44 @@ onMounted(() => {
   })
 })
 
+watch(() => props.modelValue, (val) => {
+  if (props.smooth) {
+    inputValue.value = val * 100
+  }
+  else {
+    inputValue.value = val
+  }
+})
+
 watch(inputValue, (val) => {
+  // As number
+  val = Number.parseFloat(val.toString())
+
   if (val < min.value)
     val = min.value
+
   if (val > max.value)
     val = max.value
-  emits('update:modelValue', val)
+
+  if (props.smooth) {
+    emits('update:modelValue', val / 100)
+  }
+  else {
+    emits('update:modelValue', val)
+  }
 })
 
 watch(min, (val) => {
   if (inputValue.value >= val)
     return
+
   inputValue.value = val
 })
 
 watch(max, (val) => {
   if (inputValue.value <= val)
     return
+
   inputValue.value = val
 })
 </script>
@@ -80,8 +121,8 @@ watch(max, (val) => {
         v-model="inputValue"
         type="range"
         :name="props.name"
-        :min="props.min"
-        :max="props.max"
+        :min="min"
+        :max="max"
         :disabled="props.disabled"
         :class="{ disabled: props.disabled }"
         :step="props.step"
@@ -114,7 +155,7 @@ watch(max, (val) => {
   --qrs-slider-shadow-color: #ffffff28;
   --qrs-slider-thumb-color: #c6c6c6;
   --qrs-slider-track-color: #3e3e3e;
-  --qrs-slider-track-progress-color: #6d6d6d;
+  --qrs-slider-track-progress-color: #868686;
 }
 
 .qrs-slider {
@@ -166,7 +207,7 @@ watch(max, (val) => {
   height: var(--qrs-slider-track-height);
   border: none;
   border-radius: var(--qrs-slider-track-border-radius);
-  background: #f1f1f100;
+  background: var(--qrs-slider-track-color);
   box-shadow: none;
   cursor: col-resize;
 }
@@ -206,7 +247,7 @@ watch(max, (val) => {
   background:
     linear-gradient(var(--qrs-slider-track-progress-color), var(--qrs-slider-track-progress-color)) 0 /
       var(--qrs-slider-sx) 100% no-repeat,
-    #ffffff00;
+    var(--qrs-slider-track-color);
   display: block;
   /* Trim left and right 4px paddings of track */
   width: calc(100% - var(--qrs-slider-track-progress-padding) - var(--qrs-slider-track-progress-padding));
@@ -242,7 +283,7 @@ watch(max, (val) => {
 .qrs-slider-input::-ms-track {
   height: var(--qrs-slider-track-height);
   border-radius: var(--qrs-slider-thumb-border-radius);
-  background: #f1f1f100;
+  background: var(--qrs-slider-track-color);
   border: none;
   box-shadow: none;
   box-sizing: border-box;

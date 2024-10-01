@@ -10,11 +10,18 @@ const results = ref(new Set<string>())
       Scan
     </h1>
     <Scan v-model:results="results" :speed="speed" />
-    <div mt-10>
-      <label>
-        <input v-model.number="speed" type="range" step="100" min="30" max="1000">
-        <span>Speed: {{ speed }}ms</span>
-      </label>
+    <div w-full inline-flex flex-row items-center>
+      <span min-w-40>
+        <span pr-2 text-zinc-400>Speed</span>
+        <span>{{ speed.toFixed(0) }}ms</span>
+      </span>
+      <InputSlide
+        v-model="speed"
+        :min="30"
+        :max="1000"
+        smooth
+        w-full flex-1
+      />
     </div>
     <h2 text-3xl>
       Results: {{ results.size }}
