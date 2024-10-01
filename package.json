@@ -1,0 +1,39 @@
+{
+  "type": "module",
+  "private": true,
+  "packageManager": "pnpm@9.10.0",
+  "scripts": {
+    "build": "nuxi build",
+    "dev:pwa": "VITE_PLUGIN_PWA=true nuxi dev",
+    "dev": "nuxi dev",
+    "generate": "nuxi generate",
+    "prepare": "nuxi prepare",
+    "start": "node .output/server/index.mjs",
+    "start:generate": "npx serve .output/public",
+    "lint": "eslint .",
+    "typecheck": "vue-tsc --noEmit"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "^3.6.2",
+    "@iconify-json/carbon": "^1.2.1",
+    "@iconify-json/twemoji": "^1.2.0",
+    "@nuxt/devtools": "^1.4.2",
+    "@nuxt/eslint": "^0.5.7",
+    "@nuxtjs/color-mode": "^3.5.1",
+    "@pinia/nuxt": "^0.5.4",
+    "@unocss/eslint-config": "^0.62.4",
+    "@unocss/nuxt": "^0.62.4",
+    "@vite-pwa/nuxt": "^0.10.5",
+    "@vueuse/nuxt": "^11.1.0",
+    "consola": "^3.2.3",
+    "eslint": "^9.10.0",
+    "eslint-plugin-format": "^0.1.2",
+    "nuxt": "^3.13.2",
+    "pinia": "^2.2.2",
+    "typescript": "^5.6.2",
+    "vue-tsc": "^2.1.6"
+  },
+  "resolutions": {
+    "@typescript-eslint/utils": "^8.6.0"
+  }
+}
