@@ -30,12 +30,31 @@ watchEffect(() => {
 
 const results = defineModel<Set<string>>('results', { default: new Set() })
 
+let stream: MediaStream | undefined
+
 const error = ref<any>()
 const shutterCount = ref(0)
 const video = shallowRef<HTMLVideoElement>()
 onMounted(async () => {
+  watch([() => props.width, () => props.height, selectedCamera], () => {
+    disconnectCamera()
+    connectCamera()
+  }, { immediate: true })
+
+  useIntervalFn(
+    () => scanFrame(),
+    () => props.speed,
+  )
+})
+
+function disconnectCamera() {
+  stream?.getTracks().forEach(track => track.stop())
+  stream = undefined
+}
+
+async function connectCamera() {
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({
+    stream = await navigator.mediaDevices.getUserMedia({
       audio: false,
       video: {
         width: props.width,
@@ -50,11 +69,7 @@ onMounted(async () => {
   catch (e) {
     error.value = e
   }
-  useIntervalFn(
-    () => scanFrame(),
-    () => props.speed,
-  )
-})
+}
 
 const chunks: SliceData[] = reactive([])
 const length = computed(() => chunks.find(i => i?.[1])?.[1] || 0)
@@ -93,23 +108,24 @@ async function scanFrame() {
 </script>
 
 <template>
-  <div flex flex-col items-center gap10>
-    <p>shutterCount: {{ shutterCount }}</p>
-    <video ref="video" max-w-600px />
-    <div flex-flow flex gap-4>
-      cameras
+  <div items-left flex flex-col gap6>
+    <div max-w-150 w-full flex flex-wrap gap-2>
       <button
         v-for="item of cameras" :key="item.deviceId" :class="{
           'text-blue': selectedCamera === item.deviceId,
-        }" class="border rounded-xl px2 py1 shadow-sm" @click="selectedCamera = item.deviceId"
+        }" class="border rounded-md px2 py1 text-sm shadow-sm" @click="selectedCamera = item.deviceId"
       >
         {{ item.label }}
       </button>
     </div>
-    <p>shutterCount: {{ shutterCount }}</p>
     <a v-if="dataUrl" :href="dataUrl" download="foo.png">Download</a>
     <pre v-if="error" text-red v-text="error" />
-    <video ref="video" />
+    <div relative h-full max-h-150 max-w-150 w-full>
+      <video ref="video" h-full w-full />
+      <p absolute bottom-1 right-1 border rounded-md bg-black px2 py1 text-white font-mono shadow>
+        {{ shutterCount }}
+      </p>
+    </div>
     <div flex="~ gap-1">
       <div
         v-for="x, idx in picked" :key="idx"

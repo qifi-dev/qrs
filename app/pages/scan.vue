@@ -5,7 +5,7 @@ const results = ref(new Set<string>())
 </script>
 
 <template>
-  <div py-10>
+  <div px-4 py-10 space-y-10>
     <h1 text-4xl>
       Scan
     </h1>
