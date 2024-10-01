@@ -1,6 +1,6 @@
 <template>
   <main>
-    <div flex flex-col items-center gap-4 text-center>
+    <div flex flex-col gap-4 p-4>
       <h1 text-4xl>
         QR Code Generator
       </h1>
