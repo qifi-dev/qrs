@@ -28,7 +28,7 @@ async function onFileChange(e: Event) {
 
 <template>
   <div>
-    <div flex flex-row gap-2 px-6 py-2>
+    <div flex="~ col sm:row" gap-2 px="4 sm:6" py-2>
       <input type="file" @change="onFileChange">
       <div w-full inline-flex flex-row items-center>
         <span min-w-40>
