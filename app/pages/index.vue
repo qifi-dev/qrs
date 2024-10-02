@@ -29,7 +29,7 @@ async function onFileChange(file?: File) {
   readPhase.value = ReadPhase.Reading
   const content = await file.arrayBuffer()
   readPhase.value = ReadPhase.Chunking
-  const chunks = await slice(content, 1425)
+  const chunks = await slice(content, 900)
   readPhase.value = ReadPhase.Ready
   data.value = chunks.map(i => JSON.stringify(i))
 }
