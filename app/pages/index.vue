@@ -10,7 +10,7 @@ enum ReadPhase {
 
 const count = ref(10)
 const demoData = ref(false)
-const speed = ref(100)
+const speed = ref(50)
 const readPhase = ref<ReadPhase>(ReadPhase.Idle)
 const data = ref<Array<any>>([])
 
@@ -29,7 +29,7 @@ async function onFileChange(file?: File) {
   readPhase.value = ReadPhase.Reading
   const content = await file.arrayBuffer()
   readPhase.value = ReadPhase.Chunking
-  const chunks = await slice(content)
+  const chunks = await slice(content, 1425)
   readPhase.value = ReadPhase.Ready
   data.value = chunks.map(i => JSON.stringify(i))
 }
@@ -54,7 +54,7 @@ async function onFileChange(file?: File) {
         <InputSlide
           v-model="speed"
           :min="30"
-          :max="1000"
+          :max="200"
           smooth
           w-full flex-1
         />
