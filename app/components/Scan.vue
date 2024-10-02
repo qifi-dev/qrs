@@ -12,15 +12,23 @@ const props = withDefaults(defineProps<{
   height: 512,
 })
 
-// Bandwidth calculation variables
+const kiloBytesFormatter = new Intl.NumberFormat('en-US', {
+  style: 'unit',
+  unit: 'kilobyte-per-second',
+  unitDisplay: 'short',
+})
+
+// All Bandwidth calculation variables
 const bytesReceivedInLastSecond = ref(0)
+const currentValidBandwidth = ref(0)
+const currentValidBandwidthFormatted = computed(() => {
+  return kiloBytesFormatter.format(currentValidBandwidth.value)
+})
+// Valid Bandwidth calculation variables
+const validBytesReceivedInLastSecond = ref(0)
 const currentBandwidth = ref(0)
 const currentBandwidthFormatted = computed(() => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'unit',
-    unit: 'kilobyte-per-second',
-    unitDisplay: 'short',
-  }).format(currentBandwidth.value)
+  return kiloBytesFormatter.format(currentBandwidth.value)
 })
 
 let lastUpdateTime = 0
@@ -110,6 +118,13 @@ function updateBandwidth(timestamp: number) {
 
   if (elapsedTime >= 1000) {
     // Calculate bandwidth for the last second
+    currentValidBandwidth.value = Number.parseFloat(
+      (
+        (validBytesReceivedInLastSecond.value / 1024)
+        / (elapsedTime / 1000)
+      ).toFixed(2),
+    )
+
     currentBandwidth.value = Number.parseFloat(
       (
         (bytesReceivedInLastSecond.value / 1024)
@@ -118,7 +133,9 @@ function updateBandwidth(timestamp: number) {
     )
 
     // Reset for the next second
+    validBytesReceivedInLastSecond.value = 0
     bytesReceivedInLastSecond.value = 0
+
     lastUpdateTime = now
   }
 
@@ -165,14 +182,20 @@ async function scanFrame() {
         chunks.length = 0
         dataUrl.value = undefined
       }
-      chunks[data[2]] = data
-      pluse(data[2])
 
       // Bandwidth calculation
       {
         const chunkSize = data[4].length
+
+        if (!chunks[data[2]]) {
+          validBytesReceivedInLastSecond.value += chunkSize
+        }
+
         bytesReceivedInLastSecond.value += chunkSize
       }
+
+      chunks[data[2]] = data
+      pluse(data[2])
 
       if (!length.value)
         return
@@ -231,7 +254,11 @@ watch(() => results.value.size, (size) => {
     </div>
 
     <div relative h-full max-h-150 max-w-150 w-full>
-      <video ref="video" autoplay muted playsinline aspect-ratio-1 h-full w-full rounded-lg controls="false" />
+      <video
+        ref="video"
+        autoplay muted playsinline :controls="false"
+        aspect-square h-full w-full rounded-lg
+      />
       <div absolute left-1 top-1 border border-gray:50 rounded-md bg-black:75 px2 py1 text-sm text-white font-mono shadow>
         <template v-if="length">
           {{ picked.filter(p => !!p).length }} / {{ length }}
@@ -241,7 +268,7 @@ watch(() => results.value.size, (size) => {
         </template>
       </div>
       <p absolute right-1 top-1 border border-gray:50 rounded-md bg-black:75 px2 py1 text-sm text-white font-mono shadow>
-        {{ fps.toFixed(0) }}hz | {{ shutterCount }} | {{ currentBandwidthFormatted }}
+        {{ shutterCount }} | {{ fps.toFixed(0) }} hz | {{ currentValidBandwidthFormatted }} (<span text-neutral-400>{{ currentBandwidthFormatted }}</span>)
       </p>
     </div>
   </div>

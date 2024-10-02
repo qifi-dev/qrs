@@ -38,17 +38,17 @@ async function onFileChange(file?: File) {
 
 <template>
   <div px="4" flex="~ col" w-full gap-6 py-2>
-    <div flex="~ col sm:row" gap-2>
+    <div flex="~ col sm:row" gap="6 sm:2">
       <InputFile @file="onFileChange">
         <div flex px-4 py-2 text="neutral-600 dark:neutral-400">
           <div i-carbon:document-add text-lg />
           <p font-semi-bold pl-2 text-nowrap>
-            <span>Chang File</span>
+            <span>Change File</span>
           </p>
         </div>
       </InputFile>
       <div w-full inline-flex flex-row items-center>
-        <span min-w-40>
+        <span min-w-30>
           <span pr-2 text-neutral-400>Speed</span>
           <span font-mono>{{ speed.toFixed(0) }}ms</span>
         </span>
