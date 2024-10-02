@@ -188,7 +188,7 @@ watch(() => results.value.size, (size) => {
     <a v-if="dataUrl" :href="dataUrl" download="foo.png">Download</a>
     <pre v-if="error" text-red v-text="error" />
     <div relative h-full max-h-150 max-w-150 w-full>
-      <video ref="video" h-full w-full />
+      <video ref="video" autoplay muted aspect-ratio-1 h-full w-full controls="false" />
       <p absolute bottom-1 right-1 border rounded-md bg-black px2 py1 text-white font-mono shadow>
         {{ fps.toFixed(0) }}hz | {{ shutterCount }} | {{ currentBandwidthFormatted }}
       </p>
