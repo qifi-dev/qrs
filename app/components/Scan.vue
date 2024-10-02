@@ -1,5 +1,6 @@
 <script lang="ts" setup>
-import { createDecoder, type EncodingBlock } from '~~/utils/lt-codes'
+import { binaryToBlock, createDecoder } from '~~/utils/lt-codes'
+import { toUint8Array } from 'js-base64'
 import { scan } from 'qr-scanner-wechat'
 
 const props = withDefaults(defineProps<{
@@ -50,7 +51,7 @@ watchEffect(() => {
     selectedCamera.value = cameras.value[0]?.deviceId
 })
 
-const results = defineModel<Set<string>>('results', { default: new Set() })
+// const results = defineModel<Set<string>>('results', { default: new Set() })
 
 let stream: MediaStream | undefined
 
@@ -73,7 +74,14 @@ onMounted(async () => {
   }, { immediate: true })
 
   useIntervalFn(
-    () => scanFrame(),
+    async () => {
+      try {
+        await scanFrame()
+      }
+      catch (e) {
+        error.value = e
+      }
+    },
     () => props.speed,
   )
 })
@@ -142,8 +150,9 @@ function updateBandwidth(timestamp: number) {
   requestAnimationFrame(updateBandwidth)
 }
 
-const decoder = reactive(createDecoder())
+const decoder = ref(createDecoder())
 const k = ref(0)
+const sum = ref(0)
 
 const dataUrl = ref<string>()
 const dots = useTemplateRef<HTMLDivElement[]>('dots')
@@ -173,15 +182,19 @@ async function scanFrame() {
 
   if (result?.text) {
     setFps()
-    results.value.add(result.text)
-    const data = JSON.parse(result.text) as EncodingBlock
+    const binary = toUint8Array(result.text)
+    const data = binaryToBlock(binary)
+    // Data set changed, reset decoder
+    if (sum.value !== data.sum) {
+      decoder.value = createDecoder()
+      sum.value = data.sum
+    }
     k.value = data.k
     data.indices.map(i => pluse(i))
-    if (decoder.addBlock([data])) {
-      const merged: Uint32Array = decoder.getDecoded()!
+    if (decoder.value.addBlock([data])) {
+      const merged = decoder.value.getDecoded()!
       dataUrl.value = URL.createObjectURL(new Blob([merged], { type: 'application/octet-stream' }))
     }
-
     // console.log({ data })
     // if (Array.isArray(data)) {
     //   if (data[0] !== id.value) {
@@ -189,16 +202,7 @@ async function scanFrame() {
     //     dataUrl.value = undefined
     //   }
 
-    //   // Bandwidth calculation
-    //   {
-    //     const chunkSize = data[4].length
-
-    //     if (!chunks[data[2]]) {
-    //       validBytesReceivedInLastSecond.value += chunkSize
-    //     }
-
-    //     bytesReceivedInLastSecond.value += chunkSize
-    //   }
+    //
 
     //   chunks[data[2]] = data
     //   pluse(data[2])

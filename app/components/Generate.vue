@@ -1,24 +1,29 @@
 <script lang="ts" setup>
+import type { EncodingBlock } from '~~/utils/lt-codes'
 import { blockToBinary, encodeFountain } from '~~/utils/lt-codes'
+import { fromUint8Array } from 'js-base64'
 import { renderSVG } from 'uqr'
 
 const props = withDefaults(defineProps<{
-  data: Uint32Array
+  data: Uint8Array
   speed: number
 }>(), {
   speed: 250,
 })
 
 const count = ref(0)
-const encoder = encodeFountain(props.data, 50)
+const encoder = encodeFountain(props.data, 256)
 const svg = ref<string>()
+const block = shallowRef<EncodingBlock>()
 
 onMounted(() => {
   useIntervalFn(() => {
     count.value++
     const data = encoder.next().value
-    // TODO: convert to binary
-    svg.value = renderSVG(JSON.stringify(data), { border: 1, ecc: 'L' })
+    block.value = data
+    const binary = blockToBinary(data)
+    const str = fromUint8Array(binary)
+    svg.value = renderSVG(str, { border: 1, ecc: 'L' })
   }, () => props.speed)
 })
 </script>
@@ -26,7 +31,10 @@ onMounted(() => {
 <template>
   <div flex flex-col items-center>
     <p mb-4>
-      {{ count }}
+      Indices: {{ block?.indices }}<br>
+      Total: {{ block?.k }}<br>
+      Bytes: {{ ((block?.length || 0) / 1024).toFixed(2) }} KB<br>
+      Frame: {{ count }}<br>
     </p>
     <div class="relative h-full w-full">
       <div

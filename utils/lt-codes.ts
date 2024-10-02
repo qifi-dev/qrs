@@ -15,33 +15,36 @@ interface EncodingMeta {
 
 export interface EncodingBlock extends EncodingMeta {
   indices: number[]
-  data: Uint32Array
+  data: Uint8Array
 }
 
-export function blockToBinary(block: EncodingBlock): Uint32Array {
+export function blockToBinary(block: EncodingBlock): Uint8Array {
   const { k, length, sum, indices, data } = block
-  const header = [
+  const header = new Uint32Array([
     indices.length,
     ...indices,
     k,
     length,
     sum,
-  ]
-  const binary = new Uint32Array(header.length + data.length)
-  binary.set(header)
-  binary.set(data, header.length)
+  ])
+  const binary = new Uint8Array(header.length * 4 + data.length)
+  let offset = 0
+  binary.set(new Uint8Array(header.buffer), offset)
+  offset += header.length * 4
+  binary.set(data, offset)
   return binary
 }
 
-export function binaryToBlock(binary: Uint32Array): EncodingBlock {
-  const degree = binary[0]!
-  const indices = Array.from(binary.slice(1, degree + 1))
+export function binaryToBlock(binary: Uint8Array): EncodingBlock {
+  const degree = new Uint32Array(binary.buffer, 0, 4)[0]!
+  const headerRest = Array.from(new Uint32Array(binary.buffer, 4, degree + 3))
+  const indices = headerRest.slice(0, degree)
   const [
     k,
     length,
     sum,
-  ] = Array.from(binary.slice(degree + 1)) as [number, number, number]
-  const data = binary.slice(degree + 1 + 3)
+  ] = headerRest.slice(degree) as [number, number, number]
+  const data = binary.slice(4 * (degree + 4))
   return {
     k,
     length,
@@ -52,7 +55,7 @@ export function binaryToBlock(binary: Uint32Array): EncodingBlock {
 }
 
 // CRC32 checksum
-function checksum(data: Uint32Array): number {
+function checksum(data: Uint8Array): number {
   let crc = 0xFFFFFFFF
   for (let i = 0; i < data.length; i++) {
     crc = crc ^ data[i]!
@@ -89,25 +92,25 @@ function getRandomIndices(k: number, degree: number): number[] {
   return Array.from(indices)
 }
 
-function xorUint32Array(a: Uint32Array, b: Uint32Array): Uint32Array {
-  const result = new Uint32Array(a.length)
+function xorUint8Array(a: Uint8Array, b: Uint8Array): Uint8Array {
+  const result = new Uint8Array(a.length)
   for (let i = 0; i < a.length; i++) {
     result[i] = a[i]! ^ b[i]!
   }
   return result
 }
 
-function sliceData(data: Uint32Array, blockSize: number): Uint32Array[] {
-  const blocks: Uint32Array[] = []
+function sliceData(data: Uint8Array, blockSize: number): Uint8Array[] {
+  const blocks: Uint8Array[] = []
   for (let i = 0; i < data.length; i += blockSize) {
-    const block = new Uint32Array(blockSize)
+    const block = new Uint8Array(blockSize)
     block.set(data.slice(i, i + blockSize))
     blocks.push(block)
   }
   return blocks
 }
 
-export function *encodeFountain(data: Uint32Array, indiceSize: number): Generator<EncodingBlock> {
+export function *encodeFountain(data: Uint8Array, indiceSize: number): Generator<EncodingBlock> {
   const sum = checksum(data)
   const indices = sliceData(data, indiceSize)
   const k = indices.length
@@ -120,10 +123,10 @@ export function *encodeFountain(data: Uint32Array, indiceSize: number): Generato
   while (true) {
     const degree = getRandomDegree(k)
     const selectedIndices = getRandomIndices(k, degree)
-    let encodedData = new Uint32Array(indiceSize)
+    let encodedData = new Uint8Array(indiceSize)
 
     for (const index of selectedIndices) {
-      encodedData = xorUint32Array(encodedData, indices[index]!)
+      encodedData = xorUint8Array(encodedData, indices[index]!)
     }
 
     yield {
@@ -139,7 +142,7 @@ export function createDecoder(blocks?: EncodingBlock[]) {
 }
 
 export class LtDecoder {
-  public decodedData: (Uint32Array | undefined)[] = []
+  public decodedData: (Uint8Array | undefined)[] = []
   public decodedCount = 0
   public encodedBlocks: Set<EncodingBlock> = new Set()
   public meta: EncodingBlock = undefined!
@@ -169,7 +172,7 @@ export class LtDecoder {
 
       for (const index of indices) {
         if (this.decodedData[index] != null) {
-          data = xorUint32Array(data, this.decodedData[index]!)
+          data = xorUint8Array(data, this.decodedData[index]!)
           indices = indices.filter(i => i !== index)
         }
       }
@@ -187,7 +190,7 @@ export class LtDecoder {
     return this.decodedCount === this.meta.k
   }
 
-  getDecoded(): Uint32Array | undefined {
+  getDecoded(): Uint8Array | undefined {
     if (this.decodedCount !== this.meta.k) {
       return
     }
@@ -195,8 +198,8 @@ export class LtDecoder {
       return
     }
     const indiceSize = this.meta.data.length
-    const blocks = this.decodedData as Uint32Array[]
-    const decodedData = new Uint32Array(this.meta.length)
+    const blocks = this.decodedData as Uint8Array[]
+    const decodedData = new Uint8Array(this.meta.length)
     blocks.forEach((block, i) => {
       const start = i * indiceSize
       if (start + indiceSize > decodedData.length) {
@@ -216,8 +219,8 @@ export class LtDecoder {
   }
 }
 
-export function stringToUint32Array(str: string): Uint32Array {
-  const data = new Uint32Array(str.length)
+export function stringToUint8Array(str: string): Uint8Array {
+  const data = new Uint8Array(str.length)
   for (let i = 0; i < str.length; i++) {
     data[i] = str.charCodeAt(i)
   }

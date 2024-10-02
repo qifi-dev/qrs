@@ -9,7 +9,7 @@ enum ReadPhase {
 const error = ref<any>()
 const speed = ref(50)
 const readPhase = ref<ReadPhase>(ReadPhase.Idle)
-const data = ref<Uint32Array | null>(null)
+const data = ref<Uint8Array | null>(null)
 
 async function onFileChange(file?: File) {
   if (!file) {
@@ -21,7 +21,7 @@ async function onFileChange(file?: File) {
   try {
     readPhase.value = ReadPhase.Reading
     const buffer = await file.arrayBuffer()
-    data.value = new Uint32Array(new Uint8Array(buffer))
+    data.value = new Uint8Array(buffer)
     readPhase.value = ReadPhase.Ready
   }
   catch (e) {
@@ -60,7 +60,6 @@ async function onFileChange(file?: File) {
     <div v-if="error" text-red>
       <pre v-text="error" />
     </div>
-    <div>{{ data }}</div>
     <div v-if="readPhase === ReadPhase.Ready && data" h-full w-full flex justify-center>
       <Generate
         :speed="speed"
