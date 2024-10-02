@@ -5,7 +5,7 @@ import { expect, it } from 'vitest'
 import { merge, slice } from '../utils/slicing'
 
 it('slice string', async () => {
-  const input = await fs.readFile('package.json', 'utf-8')
+  const input = await fs.readFile('test/mock-data.json', 'utf-8')
 
   const chunks = await slice(input, 64)
   expect(chunks.length)
@@ -16,12 +16,12 @@ it('slice string', async () => {
 })
 
 it('slice binary', async () => {
-  const input = (await fs.readFile('package.json', null)).buffer
+  const input = (await fs.readFile('test/mock-data.json', null)).buffer
   const inputBytes = new Uint8Array(input).length
 
   const chunks = await slice(input, 64)
   expect(chunks.length)
-    .toMatchInlineSnapshot(`23`)
+    .toMatchInlineSnapshot(`24`)
 
   const recovered = await merge(chunks)
   expect(new Uint8Array(recovered as any).length).toBe(inputBytes)
