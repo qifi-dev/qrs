@@ -126,6 +126,7 @@ function updateBandwidth(timestamp: number) {
 }
 
 const chunks: SliceData[] = reactive([])
+
 const length = computed(() => chunks.find(i => i?.[1])?.[1] || 0)
 const id = computed(() => chunks.find(i => i?.[0])?.[0] || 0)
 const picked = computed(() => Array.from({ length: length.value }, (_, idx) => chunks[idx]))
@@ -160,6 +161,10 @@ async function scanFrame() {
     results.value.add(result.text)
     const data = JSON.parse(result.text) as SliceData
     if (Array.isArray(data)) {
+      if (data[0] !== id.value) {
+        chunks.length = 0
+        dataUrl.value = undefined
+      }
       chunks[data[2]] = data
       pluse(data[2])
 
@@ -196,37 +201,48 @@ watch(() => results.value.size, (size) => {
       <button
         v-for="item of cameras" :key="item.deviceId" :class="{
           'text-blue': selectedCamera === item.deviceId,
-        }" class="border rounded-md px2 py1 text-sm shadow-sm" @click="selectedCamera = item.deviceId"
+        }"
+        class="border rounded-md px2 py1 text-sm shadow-sm"
+        @click="selectedCamera = item.deviceId"
       >
         {{ item.label }}
       </button>
     </div>
-    <a v-if="dataUrl" :href="dataUrl" download="foo.png">Download</a>
+
     <pre v-if="error" text-red v-text="error" />
-    <div relative h-full max-h-150 max-w-150 w-full>
-      <video ref="video" autoplay muted playsinline aspect-ratio-1 h-full w-full rounded-lg controls="false" />
-      <p absolute bottom-1 right-1 border rounded-md bg-black px2 py1 text-white font-mono shadow>
-        {{ fps.toFixed(0) }}hz | {{ shutterCount }} | {{ currentBandwidthFormatted }}
-      </p>
-      <div absolute left-1 right-1 top-1>
-        <div flex="~ gap-0.4 wrap">
-          <div
-            v-for="x, idx in picked"
-            :key="idx"
-            ref="dots"
-            h-4
-            w-4
-            border="~ gray rounded"
-            :class="x ? 'bg-green border-green4' : 'bg-gray:50'"
-          />
-        </div>
-        <div mt-1 w-max rounded bg-black:40 px1 text-sm>
-          {{ picked.filter(p => !!p).length }} / {{ length }}
-        </div>
+    <div border="~ gray/25 rounded-lg" flex="~ col gap-2" mb--4 max-w-150 p2>
+      <div flex="~ gap-0.4 wrap">
+        <div
+          v-for="x, idx in picked"
+          :key="idx"
+          ref="dots"
+          h-4
+          w-4
+          border="~ gray rounded"
+          :class="x ? 'bg-green border-green4' : 'bg-gray:50'"
+        />
       </div>
+      <a
+        v-if="dataUrl"
+        class="w-max border border-gray:50 rounded-md px2 py1 text-sm hover:bg-gray:10"
+        :href="dataUrl"
+        download="foo.png"
+      >Download</a>
     </div>
 
-    <div>{{ { length, id } }}</div>
-    <!-- <div>{{ chunks }}</div> -->
+    <div relative h-full max-h-150 max-w-150 w-full>
+      <video ref="video" autoplay muted playsinline aspect-ratio-1 h-full w-full rounded-lg controls="false" />
+      <div absolute left-1 top-1 border border-gray:50 rounded-md bg-black:75 px2 py1 text-sm text-white font-mono shadow>
+        <template v-if="length">
+          {{ picked.filter(p => !!p).length }} / {{ length }}
+        </template>
+        <template v-else>
+          No Data
+        </template>
+      </div>
+      <p absolute right-1 top-1 border border-gray:50 rounded-md bg-black:75 px2 py1 text-sm text-white font-mono shadow>
+        {{ fps.toFixed(0) }}hz | {{ shutterCount }} | {{ currentBandwidthFormatted }}
+      </p>
+    </div>
   </div>
 </template>
