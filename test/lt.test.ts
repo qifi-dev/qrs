@@ -6,7 +6,7 @@ import { binaryToBlock, blockToBinary, createDecoder, encodeFountain } from '../
 
 it('slice binary', async () => {
   const input = (await fs.readFile(join('test', 'SampleJPGImage_100kbmb.jpg'), null)).buffer
-  const data = new Uint8Array(input)
+  const data = new Uint32Array(input)
 
   const decoder = createDecoder()
   let count = 0
@@ -24,6 +24,6 @@ it('slice binary', async () => {
 
   const result = decoder.getDecoded()!
   expect(result).toBeDefined()
-  expect(result).toBeInstanceOf(Uint8Array)
+  expect(result).toBeInstanceOf(Uint32Array)
   expect(result.length).toBe(data.length)
 })
