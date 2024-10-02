@@ -12,6 +12,12 @@ on:
 jobs:
   lint:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read # to access the repository
+      pages: write # to deploy to Pages
+      id-token: write # to verify the deployment originates from an appropriate source
+
     steps:
       - uses: actions/checkout@v3
       - uses: pnpm/action-setup@v2
@@ -41,3 +47,17 @@ jobs:
 
       - name: Typecheck
         run: pnpm run typecheck
+
+      - name: Build
+        run: pnpm run generate
+
+      - name: Upload artifacts
+        # https://github.com/actions/upload-pages-artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "./.output/public"
+
+      - name: Deploy GitHub Pages
+        if: github.ref == 'refs/heads/main'
+        # https://github.com/actions/deploy-pages
+        uses: actions/deploy-pages@v4
