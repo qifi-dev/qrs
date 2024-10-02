@@ -10,19 +10,19 @@ export type SliceData = [
   chunk: string,
 ]
 
-async function arrayBufferToBase64(buffer: ArrayBuffer): Promise<string> {
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
   return fromUint8Array(new Uint8Array(buffer))
 }
 
-async function base64ToArrayBuffer(str: string): Promise<ArrayBuffer> {
+function base64ToArrayBuffer(str: string): ArrayBuffer {
   return toUint8Array(str).buffer
 }
 
-export async function slice(input: string | ArrayBuffer, chunkSize = 256): Promise<SliceData[]> {
+export function slice(input: string | ArrayBuffer, chunkSize = 256): SliceData[] {
   const hash = getHash(input)
   const isBinary = typeof input !== 'string'
   const processed = typeof input !== 'string'
-    ? await arrayBufferToBase64(input)
+    ? arrayBufferToBase64(input)
     : input.toString()
   const compressed = compressToBase64(processed)
 
@@ -39,14 +39,14 @@ export async function slice(input: string | ArrayBuffer, chunkSize = 256): Promi
   )
 }
 
-export async function merge(slices: SliceData[]): Promise<string | ArrayBuffer> {
+export function merge(slices: SliceData[]): string | ArrayBuffer {
   const merged = slices.map(i => i[4]).join('')
   const decompressed = decompressFromBase64(merged)
   const targetHash = slices[0]![0]
   const isBinary = slices[0]![3] === 0
 
   const data: string | ArrayBuffer = isBinary
-    ? await base64ToArrayBuffer(decompressed)
+    ? base64ToArrayBuffer(decompressed)
     : decompressed
 
   const hash = getHash(data)

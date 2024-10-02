@@ -178,7 +178,7 @@ async function scanFrame() {
         return
       if (picked.value.every(i => !!i)) {
         try {
-          const merged = await merge(picked.value as SliceData[])
+          const merged = merge(picked.value as SliceData[])
           dataUrl.value = URL.createObjectURL(new Blob([merged], { type: 'application/octet-stream' }))
         }
         catch (e) {
