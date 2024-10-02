@@ -130,6 +130,21 @@ const length = computed(() => chunks.find(i => i?.[1])?.[1] || 0)
 const id = computed(() => chunks.find(i => i?.[0])?.[0] || 0)
 const picked = computed(() => Array.from({ length: length.value }, (_, idx) => chunks[idx]))
 const dataUrl = ref<string>()
+const dots = useTemplateRef<HTMLDivElement[]>('dots')
+
+function pluse(index: number) {
+  const el = dots.value?.[index]
+  if (!el)
+    return
+  el.style.transition = 'none'
+  el.style.transform = 'scale(1.3)'
+  el.style.filter = 'hue-rotate(90deg)'
+  // // force reflow
+  void el.offsetWidth
+  el.style.transition = 'transform 0.3s, filter 0.3s'
+  el.style.transform = 'none'
+  el.style.filter = 'none'
+}
 
 async function scanFrame() {
   shutterCount.value += 1
@@ -146,6 +161,7 @@ async function scanFrame() {
     const data = JSON.parse(result.text) as SliceData
     if (Array.isArray(data)) {
       chunks[data[2]] = data
+      pluse(data[2])
 
       // Bandwidth calculation
       {
@@ -188,19 +204,28 @@ watch(() => results.value.size, (size) => {
     <a v-if="dataUrl" :href="dataUrl" download="foo.png">Download</a>
     <pre v-if="error" text-red v-text="error" />
     <div relative h-full max-h-150 max-w-150 w-full>
-      <video ref="video" autoplay muted playsinline aspect-ratio-1 h-full w-full controls="false" />
+      <video ref="video" autoplay muted playsinline aspect-ratio-1 h-full w-full rounded-lg controls="false" />
       <p absolute bottom-1 right-1 border rounded-md bg-black px2 py1 text-white font-mono shadow>
         {{ fps.toFixed(0) }}hz | {{ shutterCount }} | {{ currentBandwidthFormatted }}
       </p>
+      <div absolute left-1 right-1 top-1>
+        <div flex="~ gap-0.4 wrap">
+          <div
+            v-for="x, idx in picked"
+            :key="idx"
+            ref="dots"
+            h-4
+            w-4
+            border="~ gray rounded"
+            :class="x ? 'bg-green border-green4' : 'bg-gray:50'"
+          />
+        </div>
+        <div mt-1 w-max rounded bg-black:40 px1 text-sm>
+          {{ picked.filter(p => !!p).length }} / {{ length }}
+        </div>
+      </div>
     </div>
-    <div flex="~ gap-1 wrap" max-w-150 w-full>
-      <div
-        v-for="x, idx in picked" :key="idx"
-        h-5 w-5
-        border="~ gray:10 rounded"
-        :class="x ? 'bg-green' : '' "
-      />
-    </div>
+
     <div>{{ { length, id } }}</div>
     <!-- <div>{{ chunks }}</div> -->
   </div>
