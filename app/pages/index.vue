@@ -62,11 +62,11 @@ async function onFileChange(file?: File) {
       </div>
     </div>
     <div v-if="readPhase === ReadPhase.Ready" h-full w-full flex justify-center>
-      <Generate :speed="speed" :data="data" min-h="[calc(100vh-224px)]" max-w="[calc(100vh-224px)]" h-full w-full />
+      <Generate :speed="speed" :data="data" min-h="[calc(100vh-250px)]" max-w="[calc(100vh-250px)]" h-full w-full />
     </div>
     <InputFile
       v-else
-      min-h="[calc(100vh-224px)]" h-full w-full
+      min-h="[calc(100vh-250px)]" h-full w-full
       text="neutral-600 dark:neutral-400"
       @file="onFileChange"
     >
