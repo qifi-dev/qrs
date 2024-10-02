@@ -1,50 +1,35 @@
 <script lang="ts" setup>
-import { encode, renderSVG } from 'uqr'
+import { blockToBinary, encodeFountain } from '~~/utils/lt-codes'
+import { renderSVG } from 'uqr'
 
 const props = withDefaults(defineProps<{
-  data: string[]
+  data: Uint32Array
   speed: number
 }>(), {
   speed: 250,
 })
 
-const ecc = 'L' as const
-const minVersion = computed(() => encode(props.data[0]! || '', { ecc }).version)
-const svgList = computed(() => props.data.map(content => renderSVG(content, {
-  border: 1,
-  ecc,
-  minVersion: minVersion.value,
-})))
-const activeIndex = ref(0)
-watch(() => props.data, () => activeIndex.value = 0)
+const count = ref(0)
+const encoder = encodeFountain(props.data, 50)
+const svg = ref<string>()
 
-let intervalId: any
-function initInterval() {
-  intervalId = setInterval(() => {
-    activeIndex.value = (activeIndex.value + 1) % svgList.value.length
-  }, props.speed)
-}
-watch(() => props.speed, () => {
-  intervalId && clearInterval(intervalId)
-  initInterval()
-}, { immediate: true })
-onUnmounted(() => intervalId && clearInterval(intervalId))
+onMounted(() => {
+  useIntervalFn(() => {
+    count.value++
+    const data = encoder.next().value
+    // TODO: convert to binary
+    svg.value = renderSVG(JSON.stringify(data), { border: 1, ecc: 'L' })
+  }, () => props.speed)
+})
 </script>
 
 <template>
   <div flex flex-col items-center>
     <p mb-4>
-      {{ activeIndex }}/{{ svgList.length }}
+      {{ count }}
     </p>
     <div class="relative h-full w-full">
       <div
-        class="arc aspect-square" absolute inset-0
-        :style="{ '--deg': `${(activeIndex + 1) * 360 / svgList.length}deg` }"
-      />
-      <div
-        v-for="svg, idx of svgList"
-        :key="idx"
-        :class="{ hidden: idx !== activeIndex }"
         class="aspect-square [&>svg]:h-full [&>svg]:w-full"
         h-full w-full
         v-html="svg"

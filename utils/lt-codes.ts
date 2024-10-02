@@ -13,7 +13,7 @@ interface EncodingMeta {
   sum: number
 }
 
-interface EncodingBlock extends EncodingMeta {
+export interface EncodingBlock extends EncodingMeta {
   indices: number[]
   data: Uint32Array
 }
@@ -216,7 +216,7 @@ export class LtDecoder {
   }
 }
 
-export function tringToUint32Array(str: string): Uint32Array {
+export function stringToUint32Array(str: string): Uint32Array {
   const data = new Uint32Array(str.length)
   for (let i = 0; i < str.length; i++) {
     data[i] = str.charCodeAt(i)

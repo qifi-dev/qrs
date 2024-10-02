@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { merge, type SliceData } from '~~/utils/slicing'
+import { createDecoder, type EncodingBlock } from '~~/utils/lt-codes'
 import { scan } from 'qr-scanner-wechat'
 
 const props = withDefaults(defineProps<{
@@ -142,11 +142,9 @@ function updateBandwidth(timestamp: number) {
   requestAnimationFrame(updateBandwidth)
 }
 
-const chunks: SliceData[] = reactive([])
+const decoder = reactive(createDecoder())
+const k = ref(0)
 
-const length = computed(() => chunks.find(i => i?.[1])?.[1] || 0)
-const id = computed(() => chunks.find(i => i?.[0])?.[0] || 0)
-const picked = computed(() => Array.from({ length: length.value }, (_, idx) => chunks[idx]))
 const dataUrl = ref<string>()
 const dots = useTemplateRef<HTMLDivElement[]>('dots')
 
@@ -176,46 +174,49 @@ async function scanFrame() {
   if (result?.text) {
     setFps()
     results.value.add(result.text)
-    const data = JSON.parse(result.text) as SliceData
-    if (Array.isArray(data)) {
-      if (data[0] !== id.value) {
-        chunks.length = 0
-        dataUrl.value = undefined
-      }
-
-      // Bandwidth calculation
-      {
-        const chunkSize = data[4].length
-
-        if (!chunks[data[2]]) {
-          validBytesReceivedInLastSecond.value += chunkSize
-        }
-
-        bytesReceivedInLastSecond.value += chunkSize
-      }
-
-      chunks[data[2]] = data
-      pluse(data[2])
-
-      if (!length.value)
-        return
-      if (picked.value.every(i => !!i)) {
-        try {
-          const merged = merge(picked.value as SliceData[])
-          dataUrl.value = URL.createObjectURL(new Blob([merged], { type: 'application/octet-stream' }))
-        }
-        catch (e) {
-          error.value = e
-        }
-      }
+    const data = JSON.parse(result.text) as EncodingBlock
+    k.value = data.k
+    data.indices.map(i => pluse(i))
+    if (decoder.addBlock([data])) {
+      const merged: Uint32Array = decoder.getDecoded()!
+      dataUrl.value = URL.createObjectURL(new Blob([merged], { type: 'application/octet-stream' }))
     }
+
+    // console.log({ data })
+    // if (Array.isArray(data)) {
+    //   if (data[0] !== id.value) {
+    //     chunks.length = 0
+    //     dataUrl.value = undefined
+    //   }
+
+    //   // Bandwidth calculation
+    //   {
+    //     const chunkSize = data[4].length
+
+    //     if (!chunks[data[2]]) {
+    //       validBytesReceivedInLastSecond.value += chunkSize
+    //     }
+
+    //     bytesReceivedInLastSecond.value += chunkSize
+    //   }
+
+    //   chunks[data[2]] = data
+    //   pluse(data[2])
+
+    //   if (!length.value)
+    //     return
+    //   if (picked.value.every(i => !!i)) {
+    //     try {
+    //       const merged = merge(picked.value as SliceData[])
+    //       dataUrl.value = URL.createObjectURL(new Blob([merged], { type: 'application/octet-stream' }))
+    //     }
+    //     catch (e) {
+    //       error.value = e
+    //     }
+    //   }
+    // }
   }
 }
-
-watch(() => results.value.size, (size) => {
-  if (!size)
-    chunks.length = 0
-})
 </script>
 
 <template>
@@ -236,15 +237,16 @@ watch(() => results.value.size, (size) => {
     <div border="~ gray/25 rounded-lg" flex="~ col gap-2" mb--4 max-w-150 p2>
       <div flex="~ gap-0.4 wrap">
         <div
-          v-for="x, idx in picked"
+          v-for="x, idx in k"
           :key="idx"
           ref="dots"
           h-4
           w-4
           border="~ gray rounded"
-          :class="x ? 'bg-green border-green4' : 'bg-gray:50'"
+          :class="decoder.decodedData[idx] != null ? 'bg-green border-green4' : 'bg-gray:50'"
         />
       </div>
+      <img :src="dataUrl">
       <a
         v-if="dataUrl"
         class="w-max border border-gray:50 rounded-md px2 py1 text-sm hover:bg-gray:10"
@@ -260,8 +262,8 @@ watch(() => results.value.size, (size) => {
         aspect-square h-full w-full rounded-lg
       />
       <div absolute left-1 top-1 border border-gray:50 rounded-md bg-black:75 px2 py1 text-sm text-white font-mono shadow>
-        <template v-if="length">
-          {{ picked.filter(p => !!p).length }} / {{ length }}
+        <template v-if="k">
+          {{ Array.from({ length: k }, (_, idx) => decoder.decodedData[idx]).filter(p => !!p).length }} / {{ k }}
         </template>
         <template v-else>
           No Data
