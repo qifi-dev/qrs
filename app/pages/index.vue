@@ -16,6 +16,7 @@ const data = ref<Array<any>>([])
 
 if (demoData.value) {
   data.value = Array.from({ length: count.value }, (_, i) => `hello world ${i}`)
+  readPhase.value = ReadPhase.Ready
 }
 
 async function onFileChange(file?: File) {
@@ -36,7 +37,7 @@ async function onFileChange(file?: File) {
 </script>
 
 <template>
-  <div px="4" flex="~ col" h-full w-full gap-6 py-2>
+  <div px="4" flex="~ col" w-full gap-6 py-2>
     <div flex="~ col sm:row" gap-2>
       <InputFile @file="onFileChange">
         <div flex px-4 py-2 text="neutral-600 dark:neutral-400">
@@ -54,18 +55,18 @@ async function onFileChange(file?: File) {
         <InputSlide
           v-model="speed"
           :min="30"
-          :max="200"
+          :max="500"
           smooth
           w-full flex-1
         />
       </div>
     </div>
     <div v-if="readPhase === ReadPhase.Ready" h-full w-full flex justify-center>
-      <Generate :speed="speed" :data="data" h-full max-w-80vh w-full />
+      <Generate :speed="speed" :data="data" min-h="[calc(100vh-224px)]" max-w="[calc(100vh-224px)]" h-full w-full />
     </div>
     <InputFile
       v-else
-      h-full w-full
+      min-h="[calc(100vh-224px)]" h-full w-full
       text="neutral-600 dark:neutral-400"
       @file="onFileChange"
     >

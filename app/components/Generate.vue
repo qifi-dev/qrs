@@ -38,15 +38,16 @@ onUnmounted(() => intervalId && clearInterval(intervalId))
     </p>
     <div class="relative h-full w-full">
       <div
+        class="arc aspect-square" absolute inset-0
+        :style="{ '--deg': `${(activeIndex + 1) * 360 / svgList.length}deg` }"
+      />
+      <div
         v-for="svg, idx of svgList"
         :key="idx"
         :class="{ hidden: idx !== activeIndex }"
-        absolute inset-0 h-full w-full
+        class="aspect-square [&>svg]:h-full [&>svg]:w-full"
+        h-full w-full
         v-html="svg"
-      />
-      <div
-        class="arc" absolute inset-0 z-10
-        :style="{ '--deg': `${(activeIndex + 1) * 360 / svgList.length}deg` }"
       />
     </div>
   </div>
@@ -54,7 +55,6 @@ onUnmounted(() => intervalId && clearInterval(intervalId))
 
 <style>
 .arc {
-  aspect-ratio: 1;
   box-sizing: border-box;
   border-radius: 50%;
   background: #285655;
