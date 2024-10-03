@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { binaryToBlock, createDecoder } from '~~/utils/lt-codes'
+import { binaryToBlock, createDecoder } from '~~/utils/lt-code'
 import { toUint8Array } from 'js-base64'
 import { scan } from 'qr-scanner-wechat'
 import { useBytesRate } from '~/composables/timeseries'

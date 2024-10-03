@@ -1,6 +1,6 @@
 <script lang="ts" setup>
-import type { EncodedBlock } from '~~/utils/lt-codes'
-import { blockToBinary, createEncoder } from '~~/utils/lt-codes'
+import type { EncodedBlock } from '~~/utils/lt-code'
+import { blockToBinary, createEncoder } from '~~/utils/lt-code'
 import { fromUint8Array } from 'js-base64'
 import { renderSVG } from 'uqr'
 

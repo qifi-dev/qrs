@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest'
-import { createDecoder, createEncoder } from '../utils/lt-codes'
+import { createDecoder, createEncoder } from '../utils/lt-code'
 
 function randomBuffer(length: number) {
   return new Uint8Array(length).map(() => Math.floor(Math.random() * 256))
