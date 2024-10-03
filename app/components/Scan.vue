@@ -289,6 +289,7 @@ function now() {
     <pre v-if="error" text-red v-text="error" />
 
     <p w-full of-x-auto ws-nowrap font-mono :class="endTime ? 'text-green' : ''">
+      <span>Checksum: {{ sum }}</span><br>
       <span>Indices: {{ k }}</span><br>
       <span>Decoded: {{ decodedBlocks }}</span><br>
       <span>Received blocks: {{ decoder.encodedCount }}</span><br>
