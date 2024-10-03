@@ -14,8 +14,15 @@ const props = withDefaults(defineProps<{
   height: 1080,
 })
 
-const { totalBytes: totalBytesReceived, formatted: currentBytesFormatted } = useTransferSpeedMeter({ mode: 'sample-current' })
-const { totalBytes: totalValidBytesReceived, formatted: currentValidBytesSpeedFormatted } = useTransferSpeedMeter({ mode: 'sample-total' })
+const {
+  totalBytes: totalBytesReceived,
+  formatted: currentBytesFormatted,
+} = useTransferSpeedMeter({ mode: 'sample-current' })
+
+const {
+  totalBytes: totalValidBytesReceived,
+  formatted: currentValidBytesSpeedFormatted,
+} = useTransferSpeedMeter({ mode: 'sample-total' })
 
 const { devices } = useDevicesList({
   requestPermissions: true,
