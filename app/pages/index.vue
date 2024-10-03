@@ -1,6 +1,4 @@
 <script lang="ts" setup>
-import { slice } from '~~/utils/slicing'
-
 enum ReadPhase {
   Idle,
   Reading,
@@ -8,31 +6,29 @@ enum ReadPhase {
   Ready,
 }
 
-const count = ref(10)
-const demoData = ref(false)
-const speed = ref(50)
+const error = ref<any>()
+const speed = ref(100)
 const readPhase = ref<ReadPhase>(ReadPhase.Idle)
-const data = ref<Array<any>>([])
-
-if (demoData.value) {
-  data.value = Array.from({ length: count.value }, (_, i) => `hello world ${i}`)
-  readPhase.value = ReadPhase.Ready
-}
+const data = ref<Uint8Array | null>(null)
 
 async function onFileChange(file?: File) {
   if (!file) {
     readPhase.value = ReadPhase.Idle
-    data.value = []
-
+    data.value = null
     return
   }
 
-  readPhase.value = ReadPhase.Reading
-  const content = await file.arrayBuffer()
-  readPhase.value = ReadPhase.Chunking
-  const chunks = slice(content, 900)
-  readPhase.value = ReadPhase.Ready
-  data.value = chunks.map(i => JSON.stringify(i))
+  try {
+    readPhase.value = ReadPhase.Reading
+    const buffer = await file.arrayBuffer()
+    data.value = new Uint8Array(buffer)
+    readPhase.value = ReadPhase.Ready
+  }
+  catch (e) {
+    error.value = e
+    readPhase.value = ReadPhase.Idle
+    data.value = null
+  }
 }
 </script>
 
@@ -61,8 +57,13 @@ async function onFileChange(file?: File) {
         />
       </div>
     </div>
-    <div v-if="readPhase === ReadPhase.Ready" h-full w-full flex justify-center>
-      <Generate :speed="speed" :data="data" min-h="[calc(100vh-250px)]" max-w="[calc(100vh-250px)]" h-full w-full />
+    <div v-if="readPhase === ReadPhase.Ready && data" h-full w-full flex justify-center>
+      <Generate
+        :speed="speed" :data="data"
+        min-h="[calc(100vh-250px)]"
+        max-w="[calc(100vh-250px)]"
+        h-full w-full
+      />
     </div>
     <InputFile
       v-else

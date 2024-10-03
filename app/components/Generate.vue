@@ -1,50 +1,53 @@
 <script lang="ts" setup>
-import { encode, renderSVG } from 'uqr'
+import type { EncodedBlock } from '~~/utils/lt-code'
+import { blockToBinary, createEncoder } from '~~/utils/lt-code'
+import { fromUint8Array } from 'js-base64'
+import { renderSVG } from 'uqr'
 
 const props = withDefaults(defineProps<{
-  data: string[]
+  data: Uint8Array
   speed: number
 }>(), {
   speed: 250,
 })
 
-const ecc = 'L' as const
-const minVersion = computed(() => encode(props.data[0]! || '', { ecc }).version)
-const svgList = computed(() => props.data.map(content => renderSVG(content, {
-  border: 1,
-  ecc,
-  minVersion: minVersion.value,
-})))
-const activeIndex = ref(0)
-watch(() => props.data, () => activeIndex.value = 0)
+const count = ref(0)
+const encoder = createEncoder(props.data, 1000)
+const svg = ref<string>()
+const block = shallowRef<EncodedBlock>()
 
-let intervalId: any
-function initInterval() {
-  intervalId = setInterval(() => {
-    activeIndex.value = (activeIndex.value + 1) % svgList.value.length
-  }, props.speed)
-}
-watch(() => props.speed, () => {
-  intervalId && clearInterval(intervalId)
-  initInterval()
-}, { immediate: true })
-onUnmounted(() => intervalId && clearInterval(intervalId))
+const renderTime = ref(0)
+const framePerSecond = computed(() => 1000 / renderTime.value)
+
+onMounted(() => {
+  let frame = performance.now()
+
+  useIntervalFn(() => {
+    count.value++
+    const data = encoder.fountain().next().value
+    block.value = data
+    const binary = blockToBinary(data)
+    const str = fromUint8Array(binary)
+    svg.value = renderSVG(str, { border: 1 })
+    const now = performance.now()
+    renderTime.value = now - frame
+    frame = now
+  }, () => props.speed)
+})
 </script>
 
 <template>
-  <div flex flex-col items-center>
-    <p mb-4>
-      {{ activeIndex }}/{{ svgList.length }}
+  <div flex flex-col items-center pb-20>
+    <p mb-4 w-full of-x-auto ws-nowrap font-mono>
+      Indices: {{ block?.indices }}<br>
+      Total: {{ block?.k }}<br>
+      Bytes: {{ ((block?.bytes || 0) / 1024).toFixed(2) }} KB<br>
+      Bitrate: {{ ((block?.bytes || 0) / 1024 * framePerSecond).toFixed(2) }} Kbps<br>
+      Frame Count: {{ count }}<br>
+      FPS: {{ framePerSecond.toFixed(2) }}
     </p>
     <div class="relative h-full w-full">
       <div
-        class="arc aspect-square" absolute inset-0
-        :style="{ '--deg': `${(activeIndex + 1) * 360 / svgList.length}deg` }"
-      />
-      <div
-        v-for="svg, idx of svgList"
-        :key="idx"
-        :class="{ hidden: idx !== activeIndex }"
         class="aspect-square [&>svg]:h-full [&>svg]:w-full"
         h-full w-full
         v-html="svg"
