@@ -100,24 +100,28 @@ export class LtDecoder {
     if (this.decodedData.some(block => block == null)) {
       return
     }
-    const indiceSize = this.meta.data.length
+
+    const indicesSize = this.meta.data.length
     const blocks = this.decodedData as Uint8Array[]
     const decodedData = new Uint8Array(this.meta.bytes)
+
     blocks.forEach((block, i) => {
-      const start = i * indiceSize
-      if (start + indiceSize > decodedData.length) {
+      const start = i * indicesSize
+      if (start + indicesSize > decodedData.length) {
         for (let j = 0; j < decodedData.length - start; j++) {
           decodedData[start + j] = block[j]!
         }
       }
       else {
-        decodedData.set(block, i * indiceSize)
+        decodedData.set(block, i * indicesSize)
       }
     })
+
     const checksum = getChecksum(decodedData, this.meta.k)
     if (checksum !== this.meta.checksum) {
       throw new Error('Checksum mismatch')
     }
+
     return decodedData
   }
 }

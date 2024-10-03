@@ -37,6 +37,7 @@ export function blockToBinary(block: EncodedBlock): Uint8Array {
 
 export function binaryToBlock(binary: Uint8Array): EncodedBlock {
   const degree = new Uint32Array(binary.buffer, 0, 4)[0]!
+
   const headerRest = Array.from(new Uint32Array(binary.buffer, 4, degree + 3))
   const indices = headerRest.slice(0, degree)
   const [
@@ -45,6 +46,7 @@ export function binaryToBlock(binary: Uint8Array): EncodedBlock {
     checksum,
   ] = headerRest.slice(degree) as [number, number, number]
   const data = binary.slice(4 * (degree + 4))
+
   return {
     k,
     bytes,
@@ -59,6 +61,7 @@ export function xorUint8Array(a: Uint8Array, b: Uint8Array): Uint8Array {
   for (let i = 0; i < a.length; i++) {
     result[i] = a[i]! ^ b[i]!
   }
+
   return result
 }
 
@@ -67,5 +70,6 @@ export function stringToUint8Array(str: string): Uint8Array {
   for (let i = 0; i < str.length; i++) {
     data[i] = str.charCodeAt(i)
   }
+
   return data
 }

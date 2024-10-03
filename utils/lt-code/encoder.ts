@@ -1,8 +1,8 @@
 import type { EncodedBlock } from './shared'
 import { getChecksum } from './checksum'
 
-export function createEncoder(data: Uint8Array, indiceSize: number) {
-  return new LtEncoder(data, indiceSize)
+export function createEncoder(data: Uint8Array, indicesSize: number) {
+  return new LtEncoder(data, indicesSize)
 }
 
 export class LtEncoder {
@@ -13,20 +13,20 @@ export class LtEncoder {
 
   constructor(
     public readonly data: Uint8Array,
-    public readonly indiceSize: number,
+    public readonly indicesSize: number,
   ) {
-    this.indices = sliceData(data, indiceSize)
+    this.indices = sliceData(data, indicesSize)
     this.k = this.indices.length
     this.checksum = getChecksum(data, this.k)
     this.bytes = data.length
   }
 
   createBlock(indices: number[]): EncodedBlock {
-    const data = new Uint8Array(this.indiceSize)
+    const data = new Uint8Array(this.indicesSize)
     for (const index of indices) {
-      const indice = this.indices[index]!
-      for (let i = 0; i < this.indiceSize; i++) {
-        data[i] = data[i]! ^ indice[i]!
+      const indicesIndex = this.indices[index]!
+      for (let i = 0; i < this.indicesSize; i++) {
+        data[i] = data[i]! ^ indicesIndex[i]!
       }
     }
 
@@ -58,6 +58,7 @@ function sliceData(data: Uint8Array, blockSize: number): Uint8Array[] {
     block.set(data.slice(i, i + blockSize))
     blocks.push(block)
   }
+
   return blocks
 }
 
@@ -95,5 +96,6 @@ function getRandomIndices(k: number, degree: number): number[] {
     const randomIndex = Math.floor(Math.random() * k)
     indices.add(randomIndex)
   }
+
   return Array.from(indices)
 }
