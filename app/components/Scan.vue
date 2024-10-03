@@ -2,7 +2,7 @@
 import { binaryToBlock, createDecoder } from '~~/utils/lt-codes'
 import { toUint8Array } from 'js-base64'
 import { scan } from 'qr-scanner-wechat'
-import { useTransferSpeedMeter } from '~/composables/meter'
+import { useBytesRate, useTimeSeries } from '~/composables/meter'
 
 const props = withDefaults(defineProps<{
   speed?: number
@@ -19,15 +19,24 @@ enum CameraSignalStatus {
   Ready,
 }
 
-const {
-  totalBytes: totalBytesReceived,
-  formatted: currentBytesFormatted,
-} = useTransferSpeedMeter({ mode: 'gauge' })
+const bytesReceived = ref(0)
+const totalValidBytesReceived = ref(0)
 
-const {
-  totalBytes: totalValidBytesReceived,
-  formatted: currentValidBytesSpeedFormatted,
-} = useTransferSpeedMeter({ mode: 'counter' })
+const { formatted: currentValidBytesSpeedFormatted } = useBytesRate(totalValidBytesReceived, {
+  interval: 250,
+  timeWindow: 1000,
+  type: 'counter',
+  sampleRate: 50,
+  maxDataPoints: 100,
+})
+
+const { formatted: currentBytesFormatted } = useBytesRate(bytesReceived, {
+  interval: 250,
+  timeWindow: 1000,
+  type: 'counter',
+  sampleRate: 50,
+  maxDataPoints: 100,
+})
 
 const { devices } = useDevicesList({
   requestPermissions: true,
@@ -171,7 +180,7 @@ async function scanFrame() {
     return
 
   setFps()
-  totalBytesReceived.value += result.text.length
+  bytesReceived.value += result.text.length
   totalValidBytesReceived.value = decoder.value.encodedCount * (decoder.value.meta?.data.length ?? 0)
 
   // Do not process the same QR code twice
