@@ -12,7 +12,7 @@ const props = withDefaults(defineProps<{
 })
 
 const count = ref(0)
-const encoder = encodeFountain(props.data, 400)
+const encoder = encodeFountain(props.data, 1000)
 const svg = ref<string>()
 const block = shallowRef<EncodedBlock>()
 

@@ -9,8 +9,8 @@ const props = withDefaults(defineProps<{
   height?: number
 }>(), {
   speed: 34,
-  width: 512,
-  height: 512,
+  width: 1080,
+  height: 1080,
 })
 
 const kiloBytesFormatter = new Intl.NumberFormat('en-US', {
@@ -168,12 +168,12 @@ function getStatus() {
   const array = Array.from({ length: k.value }, () => 0)
   for (let i = 0; i < k.value; i++) {
     if (decoder.value.decodedData[i] != null)
-      array[i] = 2
+      array[i] = 1
   }
   for (const block of decoder.value.encodedBlocks) {
     for (const i of block.indices) {
-      if (array[i] === 0 || array[i] === 1) {
-        array[i] = 1
+      if (array[i] === 0 || array[i]! > block.indices.length) {
+        array[i] = block.indices.length
       }
       else {
         console.warn(`Unexpected block #${i} status: ${array[i]}`)
@@ -304,11 +304,15 @@ function now() {
           v-for="x, idx of status"
           :key="idx"
           ref="dots"
-          h-4
-          w-4
-          border="~  rounded"
-          :class="x === 2 ? 'bg-green border-green4!' : x === 1 ? 'bg-amber:50 border-amber4' : 'bg-gray:50 border-gray'"
-        />
+
+          flex="~ items-center justify-center"
+          h-4 w-4 overflow-hidden text-8px
+          border="~ rounded"
+          :class="x === 1 ? 'bg-green:100 border-green4!' : x > 1 ? 'bg-amber border-amber4 text-amber-900 dark:text-amber-200' : 'bg-gray:50 border-gray'"
+          :style="{ '--un-bg-opacity': Math.max(0.5, (11 - x) / 10) }"
+        >
+          {{ ([0, 1, 2].includes(x)) ? '' : x }}
+        </div>
       </div>
       <img :src="dataUrl">
       <a
