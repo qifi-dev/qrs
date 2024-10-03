@@ -184,30 +184,34 @@ export class LtDecoder {
       this.encodedCount += 1
     }
 
-    for (const block of this.encodedBlocks) {
-      let { data, indices } = block
+    let updated = true
 
-      // We already have all the data from this block
-      if (indices.every(index => this.decodedData[index] != null)) {
-        this.encodedBlocks.delete(block)
-        continue
-      }
+    while (updated) {
+      updated = false
+      for (const block of this.encodedBlocks) {
+        let { data, indices } = block
 
-      // XOR the data
-      for (const index of indices) {
-        if (this.decodedData[index] != null) {
-          data = xorUint8Array(data, this.decodedData[index]!)
-          indices = indices.filter(i => i !== index)
+        // We already have all the data from this block
+        if (indices.every(index => this.decodedData[index] != null)) {
+          this.encodedBlocks.delete(block)
+          continue
         }
-      }
 
-      block.data = data
-      block.indices = indices
+        // XOR the data
+        for (const index of indices) {
+          if (this.decodedData[index] != null) {
+            block.data = data = xorUint8Array(data, this.decodedData[index]!)
+            block.indices = indices = indices.filter(i => i !== index)
+            updated = true
+          }
+        }
 
-      if (indices.length === 1 && this.decodedData[indices[0]!] == null) {
-        this.decodedData[indices[0]!] = data
-        this.decodedCount++
-        this.encodedBlocks.delete(block)
+        if (indices.length === 1 && this.decodedData[indices[0]!] == null) {
+          this.decodedData[indices[0]!] = data
+          this.decodedCount++
+          this.encodedBlocks.delete(block)
+          updated = true
+        }
       }
     }
 
