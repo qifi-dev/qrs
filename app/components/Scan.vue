@@ -311,7 +311,7 @@ function now() {
     <div v-if="k" relative h-2 max-w-150 rounded-lg bg-black:75 text-white font-mono shadow>
       <div
         absolute inset-y-0 h-full bg-green border="~ green4 rounded-lg"
-        :style="{ width: `${decodedBlocks === k ? 100 : (Math.min(1, receivedBytes / length * 0.66) * 100).toFixed(2)}%` }"
+        :style="{ width: `${decodedBlocks === k ? 100 : (Math.min(1, receivedBytes / bytes * 0.66) * 100).toFixed(2)}%` }"
       />
     </div>
 
