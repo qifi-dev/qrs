@@ -8,9 +8,9 @@ interface EncodedHeader {
    */
   length: number
   /**
-   * Checksum
+   * Checksum, CRC32 and XOR of k
    */
-  sum: number
+  checksum: number
 }
 
 export interface EncodedBlock extends EncodedHeader {
@@ -19,7 +19,7 @@ export interface EncodedBlock extends EncodedHeader {
 }
 
 export function blockToBinary(block: EncodedBlock): Uint8Array {
-  const { k, length, sum, indices, data } = block
+  const { k, length, checksum: sum, indices, data } = block
   const header = new Uint32Array([
     indices.length,
     ...indices,
@@ -48,22 +48,43 @@ export function binaryToBlock(binary: Uint8Array): EncodedBlock {
   return {
     k,
     length,
-    sum,
+    checksum: sum,
     indices,
     data,
   }
 }
 
-// CRC32 checksum
-function checksum(data: Uint8Array): number {
-  let crc = 0xFFFFFFFF
-  for (let i = 0; i < data.length; i++) {
-    crc = crc ^ data[i]!
-    for (let j = 0; j < 8; j++) {
-      crc = crc & 1 ? (crc >>> 1) ^ 0xEDB88320 : crc >>> 1
+function generateCRCTable() {
+  const crcTable = new Uint32Array(256)
+  for (let i = 0; i < 256; i++) {
+    let crc = i
+    for (let j = 8; j > 0; j--) {
+      if (crc & 1) {
+        crc = (crc >>> 1) ^ 0xEDB88320 // Polynomial used in CRC-32
+      }
+      else {
+        crc = crc >>> 1
+      }
     }
+    crcTable[i] = crc >>> 0
   }
-  return crc ^ 0xFFFFFFFF
+  return crcTable
+}
+
+const crcTable = /* @__PURE__ */ generateCRCTable()
+
+/**
+ * Get checksum of the data using CRC32 and XOR with k to ensure uniqueness for different chunking sizes
+ */
+function getChecksum(uint8Array: Uint8Array, k: number): number {
+  let crc = 0xFFFFFFFF // Initial value
+
+  for (let i = 0; i < uint8Array.length; i++) {
+    const byte = uint8Array[i]!
+    crc = (crc >>> 8) ^ crcTable[(crc ^ byte) & 0xFF]!
+  }
+
+  return (crc ^ k ^ 0xFFFFFFFF) >>> 0 // Final XOR value and ensure 32-bit unsigned
 }
 
 // Use Ideal Soliton Distribution to select degree
@@ -121,14 +142,18 @@ function sliceData(data: Uint8Array, blockSize: number): Uint8Array[] {
   return blocks
 }
 
+/**
+ * Encode the data into fountain codes
+ * This returns a generator that yields encoded blocks that **never** ends
+ */
 export function *encodeFountain(data: Uint8Array, indiceSize: number): Generator<EncodedBlock> {
-  const sum = checksum(data)
   const indices = sliceData(data, indiceSize)
   const k = indices.length
+  const sum = getChecksum(data, k)
   const meta: EncodedHeader = {
     k,
     length: data.length,
-    sum,
+    checksum: sum,
   }
 
   while (true) {
@@ -177,7 +202,7 @@ export class LtDecoder {
     }
 
     for (const block of blocks) {
-      if (block.sum !== this.meta.sum) {
+      if (block.checksum !== this.meta.checksum) {
         throw new Error('Adding block with different checksum')
       }
       this.encodedBlocks.add(block)
@@ -255,8 +280,8 @@ export class LtDecoder {
         decodedData.set(block, i * indiceSize)
       }
     })
-    const sum = checksum(decodedData)
-    if (sum !== this.meta.sum) {
+    const sum = getChecksum(decodedData, this.meta.k)
+    if (sum !== this.meta.checksum) {
       throw new Error('Checksum mismatch')
     }
     return decodedData

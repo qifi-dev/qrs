@@ -182,9 +182,9 @@ async function scanFrame() {
   const binary = toUint8Array(result.text)
   const data = binaryToBlock(binary)
   // Data set changed, reset decoder
-  if (sum.value !== data.sum) {
+  if (sum.value !== data.checksum) {
     decoder.value = createDecoder()
-    sum.value = data.sum
+    sum.value = data.checksum
     length.value = data.length
     k.value = data.k
     startTime.value = performance.now()
