@@ -38,7 +38,7 @@ const list: {
 for (const item of list) {
   let test = it
   if (item.only)
-    test = it.only as any
+    test = (it as any).only
   const {
     data,
     name,
