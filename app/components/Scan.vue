@@ -107,8 +107,8 @@ async function connectCamera() {
 
 const decoder = ref(createDecoder())
 const k = ref(0)
-const length = ref(0)
-const sum = ref(0)
+const bytes = ref(0)
+const checksum = ref(0)
 const cached = new Set<string>()
 const startTime = ref(0)
 const endTime = ref(0)
@@ -182,10 +182,10 @@ async function scanFrame() {
   const binary = toUint8Array(result.text)
   const data = binaryToBlock(binary)
   // Data set changed, reset decoder
-  if (sum.value !== data.checksum) {
+  if (checksum.value !== data.checksum) {
     decoder.value = createDecoder()
-    sum.value = data.checksum
-    length.value = data.length
+    checksum.value = data.checksum
+    bytes.value = data.bytes
     k.value = data.k
     startTime.value = performance.now()
     endTime.value = 0
@@ -199,7 +199,7 @@ async function scanFrame() {
   cached.add(result.text)
   k.value = data.k
   data.indices.map(i => pluse(i))
-  const success = decoder.value.addBlock([data])
+  const success = decoder.value.addBlock(data)
   status.value = getStatus()
   if (success) {
     endTime.value = performance.now()
@@ -256,12 +256,12 @@ function now() {
 
     <Collapsable>
       <p w-full of-x-auto ws-nowrap px2 py1 font-mono :class="endTime ? 'text-green' : ''">
-        <span>Checksum: {{ sum }}</span><br>
+        <span>Checksum: {{ checksum }}</span><br>
         <span>Indices: {{ k }}</span><br>
         <span>Decoded: {{ decodedBlocks }}</span><br>
         <span>Received blocks: {{ decoder.encodedCount }}</span><br>
-        <span>Expected bytes: {{ (length / 1024).toFixed(2) }} KB</span><br>
-        <span>Received bytes: {{ (receivedBytes / 1024).toFixed(2) }} KB ({{ length === 0 ? 0 : (receivedBytes / length * 100).toFixed(2) }}%)</span><br>
+        <span>Expected bytes: {{ (bytes / 1024).toFixed(2) }} KB</span><br>
+        <span>Received bytes: {{ (receivedBytes / 1024).toFixed(2) }} KB ({{ bytes === 0 ? 0 : (receivedBytes / bytes * 100).toFixed(2) }}%)</span><br>
         <span>Timepassed: {{ (((endTime || now()) - startTime) / 1000).toFixed(2) }} s</span><br>
         <span>Average bitrate: {{ (receivedBytes / 1024 / ((endTime || now()) - startTime) * 1000).toFixed(2) }} Kbps</span><br>
       </p>
@@ -306,7 +306,7 @@ function now() {
       />
       <div absolute left-1 top-1 border border-gray:50 rounded-md bg-black:75 px2 py1 text-white font-mono shadow>
         <template v-if="k">
-          {{ (receivedBytes / 1024).toFixed(2) }} / {{ (length / 1024).toFixed(2) }} KB <span text-neutral-400>({{ (receivedBytes / length * 100).toFixed(2) }}%)</span>
+          {{ (receivedBytes / 1024).toFixed(2) }} / {{ (bytes / 1024).toFixed(2) }} KB <span text-neutral-400>({{ (receivedBytes / bytes * 100).toFixed(2) }}%)</span>
         </template>
         <template v-else>
           No Data

@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import type { EncodedBlock } from '~~/utils/lt-codes'
-import { blockToBinary, encodeFountain } from '~~/utils/lt-codes'
+import { blockToBinary, createEncoder } from '~~/utils/lt-codes'
 import { fromUint8Array } from 'js-base64'
 import { renderSVG } from 'uqr'
 
@@ -12,7 +12,7 @@ const props = withDefaults(defineProps<{
 })
 
 const count = ref(0)
-const encoder = encodeFountain(props.data, 1000)
+const encoder = createEncoder(props.data, 1000)
 const svg = ref<string>()
 const block = shallowRef<EncodedBlock>()
 
@@ -24,7 +24,7 @@ onMounted(() => {
 
   useIntervalFn(() => {
     count.value++
-    const data = encoder.next().value
+    const data = encoder.fountain().next().value
     block.value = data
     const binary = blockToBinary(data)
     const str = fromUint8Array(binary)
@@ -41,8 +41,8 @@ onMounted(() => {
     <p mb-4 w-full of-x-auto ws-nowrap font-mono>
       Indices: {{ block?.indices }}<br>
       Total: {{ block?.k }}<br>
-      Bytes: {{ ((block?.length || 0) / 1024).toFixed(2) }} KB<br>
-      Bitrate: {{ ((block?.length || 0) / 1024 * framePerSecond).toFixed(2) }} Kbps<br>
+      Bytes: {{ ((block?.bytes || 0) / 1024).toFixed(2) }} KB<br>
+      Bitrate: {{ ((block?.bytes || 0) / 1024 * framePerSecond).toFixed(2) }} Kbps<br>
       Frame Count: {{ count }}<br>
       FPS: {{ framePerSecond.toFixed(2) }}
     </p>

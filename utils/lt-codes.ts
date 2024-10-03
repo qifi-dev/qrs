@@ -1,4 +1,4 @@
-interface EncodedHeader {
+export interface EncodedHeader {
   /**
    * Number of original data blocks
    */
@@ -6,7 +6,7 @@ interface EncodedHeader {
   /**
    * Data length for Uint8Array data
    */
-  length: number
+  bytes: number
   /**
    * Checksum, CRC32 and XOR of k
    */
@@ -19,13 +19,13 @@ export interface EncodedBlock extends EncodedHeader {
 }
 
 export function blockToBinary(block: EncodedBlock): Uint8Array {
-  const { k, length, checksum: sum, indices, data } = block
+  const { k, bytes, checksum, indices, data } = block
   const header = new Uint32Array([
     indices.length,
     ...indices,
     k,
-    length,
-    sum,
+    bytes,
+    checksum,
   ])
   const binary = new Uint8Array(header.length * 4 + data.length)
   let offset = 0
@@ -41,14 +41,14 @@ export function binaryToBlock(binary: Uint8Array): EncodedBlock {
   const indices = headerRest.slice(0, degree)
   const [
     k,
-    length,
-    sum,
+    bytes,
+    checksum,
   ] = headerRest.slice(degree) as [number, number, number]
   const data = binary.slice(4 * (degree + 4))
   return {
     k,
-    length,
-    checksum: sum,
+    bytes,
+    checksum,
     indices,
     data,
   }
@@ -78,7 +78,6 @@ const crcTable = /* @__PURE__ */ generateCRCTable()
  */
 function getChecksum(uint8Array: Uint8Array, k: number): number {
   let crc = 0xFFFFFFFF // Initial value
-
   for (let i = 0; i < uint8Array.length; i++) {
     const byte = uint8Array[i]!
     crc = (crc >>> 8) ^ crcTable[(crc ^ byte) & 0xFF]!
@@ -142,39 +141,58 @@ function sliceData(data: Uint8Array, blockSize: number): Uint8Array[] {
   return blocks
 }
 
-/**
- * Encode the data into fountain codes
- * This returns a generator that yields encoded blocks that **never** ends
- */
-export function *encodeFountain(data: Uint8Array, indiceSize: number): Generator<EncodedBlock> {
-  const indices = sliceData(data, indiceSize)
-  const k = indices.length
-  const sum = getChecksum(data, k)
-  const meta: EncodedHeader = {
-    k,
-    length: data.length,
-    checksum: sum,
-  }
-
-  while (true) {
-    const degree = getRandomDegree(k)
-    const selectedIndices = getRandomIndices(k, degree)
-    let encodedData = new Uint8Array(indiceSize)
-
-    for (const index of selectedIndices) {
-      encodedData = xorUint8Array(encodedData, indices[index]!)
-    }
-
-    yield {
-      ...meta,
-      indices: selectedIndices,
-      data: encodedData,
-    }
-  }
-}
-
 export function createDecoder(blocks?: EncodedBlock[]) {
   return new LtDecoder(blocks)
+}
+
+export function createEncoder(data: Uint8Array, indiceSize: number) {
+  return new LtEncoder(data, indiceSize)
+}
+
+export class LtEncoder {
+  public readonly k: number
+  public readonly indices: Uint8Array[]
+  public readonly checksum: number
+  public readonly bytes: number
+
+  constructor(
+    public readonly data: Uint8Array,
+    public readonly indiceSize: number,
+  ) {
+    this.indices = sliceData(data, indiceSize)
+    this.k = this.indices.length
+    this.checksum = getChecksum(data, this.k)
+    this.bytes = data.length
+  }
+
+  createBlock(indices: number[]): EncodedBlock {
+    const data = new Uint8Array(this.indiceSize)
+    for (const index of indices) {
+      const indice = this.indices[index]!
+      for (let i = 0; i < this.indiceSize; i++) {
+        data[i] = data[i]! ^ indice[i]!
+      }
+    }
+
+    return {
+      k: this.k,
+      bytes: this.bytes,
+      checksum: this.checksum,
+      indices,
+      data,
+    }
+  }
+
+  /**
+   * Generate random encoded blocks that **never** ends
+   */
+  *fountain(): Generator<EncodedBlock> {
+    while (true) {
+      const degree = getRandomDegree(this.k)
+      const selectedIndices = getRandomIndices(this.k, degree)
+      yield this.createBlock(selectedIndices)
+    }
+  }
 }
 
 export class LtDecoder {
@@ -186,28 +204,24 @@ export class LtDecoder {
 
   constructor(blocks?: EncodedBlock[]) {
     if (blocks) {
-      this.addBlock(blocks)
+      for (const block of blocks) {
+        this.addBlock(block)
+      }
     }
   }
 
-  // Add blocks and decode them on the fly
-  addBlock(blocks: EncodedBlock[]): boolean {
-    if (!blocks.length) {
-      return false
-    }
-
+  // Add block and decode them on the fly
+  addBlock(block: EncodedBlock): boolean {
     if (!this.meta) {
-      this.meta = blocks[0]!
+      this.meta = block
       this.decodedData = Array.from({ length: this.meta.k })
     }
 
-    for (const block of blocks) {
-      if (block.checksum !== this.meta.checksum) {
-        throw new Error('Adding block with different checksum')
-      }
-      this.encodedBlocks.add(block)
-      this.encodedCount += 1
+    if (block.checksum !== this.meta.checksum) {
+      throw new Error('Adding block with different checksum')
     }
+    this.encodedBlocks.add(block)
+    this.encodedCount += 1
 
     let updated = true
     while (updated) {
@@ -231,6 +245,18 @@ export class LtDecoder {
           }
         }
 
+        if (indices.length === 1 && this.decodedData[indices[0]!] == null) {
+          this.decodedData[indices[0]!] = block.data
+          this.decodedCount++
+          this.encodedBlocks.delete(block)
+          console.log('decoded', indices[0]!, data.slice(0, 5))
+          updated = true
+        }
+      }
+
+      for (const block of this.encodedBlocks) {
+        const { data, indices } = block
+
         // Use 1x2x3 XOR 2x3 to get 1
         if (indices.length >= 3) {
           const lowerBlocks = Array.from(this.encodedBlocks).filter(i => i.indices.length === indices.length - 1)
@@ -245,13 +271,6 @@ export class LtDecoder {
               updated = true
             }
           }
-        }
-
-        if (indices.length === 1 && this.decodedData[indices[0]!] == null) {
-          this.decodedData[indices[0]!] = data
-          this.decodedCount++
-          this.encodedBlocks.delete(block)
-          updated = true
         }
       }
     }
@@ -268,7 +287,7 @@ export class LtDecoder {
     }
     const indiceSize = this.meta.data.length
     const blocks = this.decodedData as Uint8Array[]
-    const decodedData = new Uint8Array(this.meta.length)
+    const decodedData = new Uint8Array(this.meta.bytes)
     blocks.forEach((block, i) => {
       const start = i * indiceSize
       if (start + indiceSize > decodedData.length) {
@@ -280,8 +299,8 @@ export class LtDecoder {
         decodedData.set(block, i * indiceSize)
       }
     })
-    const sum = getChecksum(decodedData, this.meta.k)
-    if (sum !== this.meta.checksum) {
+    const checksum = getChecksum(decodedData, this.meta.k)
+    if (checksum !== this.meta.checksum) {
       throw new Error('Checksum mismatch')
     }
     return decodedData
