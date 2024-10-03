@@ -298,13 +298,22 @@ function now() {
       </div>
     </Collapsable>
 
+    <!-- This is a progress bar that is not accurate but feels comfortable. -->
+    <div v-if="k" relative h-2 max-w-150 rounded-lg bg-black:75 text-white font-mono shadow>
+      <div
+        absolute inset-y-0 h-full bg-green border="~ green4 rounded-lg"
+        :style="{ width: `${decodedBlocks === k ? 100 : (Math.min(1, receivedBytes / length * 0.66) * 100).toFixed(2)}%` }"
+      />
+    </div>
+
     <div relative h-full max-h-150 max-w-150 w-full text="10px md:sm">
       <video
         ref="video"
         autoplay muted playsinline :controls="false"
         aspect-square h-full w-full rounded-lg
       />
-      <div absolute left-1 top-1 border border-gray:50 rounded-md bg-black:75 px2 py1 text-white font-mono shadow>
+
+      <div absolute left-1 top-1 border="~ gray:50 rounded-md" bg-black:75 px2 py1 text-white font-mono shadow>
         <template v-if="k">
           {{ (receivedBytes / 1024).toFixed(2) }} / {{ (bytes / 1024).toFixed(2) }} KB <span text-neutral-400>({{ (receivedBytes / bytes * 100).toFixed(2) }}%)</span>
         </template>
@@ -319,7 +328,7 @@ function now() {
         <div i-carbon:circle-dash animate-spin animate-duration-5000 text-3xl />
         <p>No Signal</p>
       </div>
-      <p absolute right-1 top-1 border border-gray:50 rounded-md bg-black:75 px2 py1 text-white font-mono shadow>
+      <p absolute right-1 top-1 border="~ gray:50 rounded-md" bg-black:75 px2 py1 text-white font-mono shadow>
         {{ fps.toFixed(0) }} hz | {{ currentValidBytesSpeedFormatted }} <span text-neutral-400>({{ currentBytesFormatted }})</span>
       </p>
     </div>
