@@ -1,6 +1,6 @@
 <template>
   <main h-full>
-    <div flex flex-col gap-4 px-4 pb-2 pt-4>
+    <div flex flex-col gap-4 px-4 pb-4 pt-4>
       <h1 text-4xl>
         Qrs
       </h1>

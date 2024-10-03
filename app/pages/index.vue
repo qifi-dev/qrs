@@ -57,26 +57,20 @@ async function onFileChange(file?: File) {
         />
       </div>
     </div>
-    <div v-if="error" text-red>
-      <pre v-text="error" />
-    </div>
     <div v-if="readPhase === ReadPhase.Ready && data" h-full w-full flex justify-center>
       <Generate
-        :speed="speed"
-        :data="data"
-        min-h="[calc(100vh-224px)]" max-w="[calc(100vh-224px)]" h-full w-full
+        :speed="speed" :data="data"
+        min-h="[calc(100vh-250px)]"
+        max-w="[calc(100vh-250px)]"
+        h-full w-full
       />
     </div>
     <InputFile
       v-else
-      min-h="[calc(100vh-224px)]" h-full w-full
+      min-h="[calc(100vh-250px)]" h-full w-full
       text="neutral-600 dark:neutral-400"
       @file="onFileChange"
-    >
-      <div i-carbon:document-add text-2xl />
-      <p font-semi-bold pl-4 text-2xl>
-        <span>Choose</span>
-      </p>
-    </InputFile>
+    />
+    <DropZone text="Drop File Here" @file="onFileChange" />
   </div>
 </template>
