@@ -48,11 +48,16 @@ const { devices } = useDevicesList({
 
 const cameraSignalStatus = ref(CameraSignalStatus.Waiting)
 const cameras = computed(() => devices.value.filter(i => i.kind === 'videoinput'))
-const selectedCamera = ref(cameras.value[0]?.deviceId)
+const selectedCamera = useLocalStorage('qrs-selected-camera', cameras.value[0]?.deviceId)
 
 watchEffect(() => {
   if (!selectedCamera.value)
     selectedCamera.value = cameras.value[0]?.deviceId
+})
+
+watch(cameras, () => {
+  if (selectedCamera.value && cameras.value.filter(i => i.deviceId === selectedCamera.value).length === 0)
+    selectedCamera.value = ''
 })
 
 // const results = defineModel<Set<string>>('results', { default: new Set() })
@@ -97,6 +102,8 @@ function disconnectCamera() {
 
 async function connectCamera() {
   try {
+    cameraSignalStatus.value = CameraSignalStatus.Waiting
+
     stream = await navigator.mediaDevices.getUserMedia({
       audio: false,
       video: {
