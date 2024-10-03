@@ -4,7 +4,7 @@ interface EncodedHeader {
    */
   k: number
   /**
-   * Data length
+   * Data length for Uint8Array data
    */
   length: number
   /**

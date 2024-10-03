@@ -16,25 +16,35 @@ const encoder = encodeFountain(props.data, 400)
 const svg = ref<string>()
 const block = shallowRef<EncodedBlock>()
 
+const renderTime = ref(0)
+const framePerSecond = computed(() => 1000 / renderTime.value)
+
 onMounted(() => {
+  let frame = performance.now()
+
   useIntervalFn(() => {
     count.value++
     const data = encoder.next().value
     block.value = data
     const binary = blockToBinary(data)
     const str = fromUint8Array(binary)
-    svg.value = renderSVG(str, { border: 1  })
+    svg.value = renderSVG(str, { border: 1 })
+    const now = performance.now()
+    renderTime.value = now - frame
+    frame = now
   }, () => props.speed)
 })
 </script>
 
 <template>
   <div flex flex-col items-center>
-    <p mb-4>
+    <p mb-4 w-full font-mono>
       Indices: {{ block?.indices }}<br>
       Total: {{ block?.k }}<br>
       Bytes: {{ ((block?.length || 0) / 1024).toFixed(2) }} KB<br>
-      Frame: {{ count }}<br>
+      Bitrate: {{ ((block?.length || 0) / 1024 * framePerSecond).toFixed(2) }} Kbps<br>
+      Frame Count: {{ count }}<br>
+      FPS: {{ framePerSecond.toFixed(2) }}
     </p>
     <div class="relative h-full w-full">
       <div
