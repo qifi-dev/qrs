@@ -14,15 +14,20 @@ const props = withDefaults(defineProps<{
   height: 1080,
 })
 
+enum CameraSignalStatus {
+  Waiting,
+  Ready,
+}
+
 const {
   totalBytes: totalBytesReceived,
   formatted: currentBytesFormatted,
-} = useTransferSpeedMeter({ mode: 'sample-current' })
+} = useTransferSpeedMeter({ mode: 'gauge' })
 
 const {
   totalBytes: totalValidBytesReceived,
   formatted: currentValidBytesSpeedFormatted,
-} = useTransferSpeedMeter({ mode: 'sample-total' })
+} = useTransferSpeedMeter({ mode: 'counter' })
 
 const { devices } = useDevicesList({
   requestPermissions: true,
@@ -32,6 +37,7 @@ const { devices } = useDevicesList({
   },
 })
 
+const cameraSignalStatus = ref(CameraSignalStatus.Waiting)
 const cameras = computed(() => devices.value.filter(i => i.kind === 'videoinput'))
 const selectedCamera = ref(cameras.value[0]?.deviceId)
 
@@ -111,7 +117,7 @@ const dataUrl = ref<string>()
 const dots = useTemplateRef<HTMLDivElement[]>('dots')
 const status = ref<number[]>([])
 const decodedBlocks = computed(() => status.value.filter(i => i === 2).length)
-const receivedBytes = computed(() => decoder.value.encodedCount * (decoder.value.meta?.data.length || 0))
+const receivedBytes = computed(() => decoder.value.encodedCount * (decoder.value.meta?.data.length ?? 0))
 
 function getStatus() {
   const array = Array.from({ length: k.value }, () => 0)
@@ -151,8 +157,15 @@ async function scanFrame() {
   const canvas = document.createElement('canvas')
   canvas.width = video.value!.videoWidth
   canvas.height = video.value!.videoHeight
+  if (video.value!.videoWidth === 0 || video.value!.videoHeight === 0) {
+    cameraSignalStatus.value = CameraSignalStatus.Waiting
+    return
+  }
+
+  cameraSignalStatus.value = CameraSignalStatus.Ready
   const ctx = canvas.getContext('2d')!
   ctx.drawImage(video.value!, 0, 0, canvas.width, canvas.height)
+
   const result = await scan(canvas)
   if (!result.text)
     return
@@ -288,6 +301,13 @@ function now() {
         <template v-else>
           No Data
         </template>
+      </div>
+      <div
+        v-if="cameraSignalStatus === CameraSignalStatus.Waiting"
+        top="50%" left="[calc(50%-4.5ch)]" text="neutral-500" absolute flex flex-col items-center gap-2 font-mono
+      >
+        <div i-carbon:circle-dash animate-spin animate-duration-5000 text-3xl />
+        <p>No Signal</p>
       </div>
       <p absolute right-1 top-1 border border-gray:50 rounded-md bg-black:75 px2 py1 text-sm text-white font-mono shadow>
         {{ shutterCount }} | {{ fps.toFixed(0) }} hz | {{ currentValidBytesSpeedFormatted }} <span text-neutral-400>({{ currentBytesFormatted }})</span>

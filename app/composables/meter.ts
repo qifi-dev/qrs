@@ -17,20 +17,20 @@ export function useTransferSpeedMeter(options: MeterOptions) {
 }
 
 interface MeterOptions {
-  per?: number
-  mode?: 'sample-total' | 'sample-current'
+  sampleRate?: number
+  mode?: 'counter' | 'gauge'
 }
 
 export function useMeter(options?: MeterOptions) {
   if (!options) {
-    options = { mode: 'sample-total' }
+    options = { mode: 'counter' }
   }
 
-  return options?.mode === 'sample-total' ? useSampleTotalMeter(options) : useSampleCurrentMeter(options)
+  return options?.mode === 'counter' ? useCounterMeter(options) : useGaugeMeter(options)
 }
 
-export function useSampleTotalMeter(options?: Omit<MeterOptions, 'mode'>) {
-  const per = options?.per || 1000
+export function useCounterMeter(options?: Omit<MeterOptions, 'mode'>) {
+  const per = options?.sampleRate || 1000
 
   const lastUpdateTime = ref(0)
 
@@ -59,8 +59,8 @@ export function useSampleTotalMeter(options?: Omit<MeterOptions, 'mode'>) {
   }
 }
 
-export function useSampleCurrentMeter(options?: Omit<MeterOptions, 'mode'>) {
-  const per = options?.per || 1000
+export function useGaugeMeter(options?: Omit<MeterOptions, 'mode'>) {
+  const per = options?.sampleRate || 1000
 
   const lastUpdateTime = ref(0)
 
