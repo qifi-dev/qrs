@@ -36,10 +36,13 @@ async function onDrop(event: DragEvent) {
   isDragging.value = false
   if (event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files.length > 0) {
     dragCounter.value = 0
-    const firstFile = event.dataTransfer.files[0]
-    if (!firstFile) {
-      return
+    if (event.dataTransfer.files.length > 1) {
+      console.warn('Multiple files are not supported. Only the first file will be processed.')
     }
+    const firstFile = event.dataTransfer.files[0]
+    if (!firstFile)
+      return
+
     emit('file', firstFile)
     event.dataTransfer.clearData()
   }
