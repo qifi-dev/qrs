@@ -235,8 +235,6 @@ async function scanFrame() {
 function now() {
   return performance.now()
 }
-
-const inspect = ref(false)
 </script>
 
 <template>
@@ -256,13 +254,7 @@ const inspect = ref(false)
 
     <pre v-if="error" overflow-x-auto text-red v-text="error" />
 
-    <div flex="~ col" border="~ gray/25 rounded-lg" divide="y dashed gray/25" max-w-150 of-hidden shadow-sm>
-      <button
-        px2 py1 text-sm
-        @click="inspect = !inspect"
-      >
-        Inspect {{ inspect ? '▲' : '▼' }}
-      </button>
+    <Collapsable>
       <p w-full of-x-auto ws-nowrap px2 py1 font-mono :class="endTime ? 'text-green' : ''">
         <span>Checksum: {{ sum }}</span><br>
         <span>Indices: {{ k }}</span><br>
@@ -273,31 +265,38 @@ const inspect = ref(false)
         <span>Timepassed: {{ (((endTime || now()) - startTime) / 1000).toFixed(2) }} s</span><br>
         <span>Average bitrate: {{ (receivedBytes / 1024 / ((endTime || now()) - startTime) * 1000).toFixed(2) }} Kbps</span><br>
       </p>
-    </div>
-    <div border="~ gray/25 rounded-lg" flex="~ col gap-2" mb--4 max-w-150 p2>
-      <div flex="~ gap-0.4 wrap">
-        <div
-          v-for="x, idx of status"
-          :key="idx"
-          ref="dots"
+    </Collapsable>
 
-          flex="~ items-center justify-center"
-          h-4 w-4 overflow-hidden text-8px
-          border="~ rounded"
-          :class="x === 1 ? 'bg-green:100 border-green4!' : x > 1 ? 'bg-amber border-amber4 text-amber-900 dark:text-amber-200' : 'bg-gray:50 border-gray'"
-          :style="{ '--un-bg-opacity': Math.max(0.5, (11 - x) / 10) }"
-        >
-          {{ ([0, 1, 2].includes(x)) ? '' : x }}
+    <Collapsable v-if="k" label="Packets" :default="true">
+      <div flex="~ col gap-2" max-w-150 p2>
+        <div flex="~ gap-0.4 wrap">
+          <div
+            v-for="x, idx of status"
+            :key="idx"
+            ref="dots"
+
+            flex="~ items-center justify-center"
+            h-4 w-4 overflow-hidden text-8px
+            border="~ rounded"
+            :class="x === 1 ? 'bg-green:100 border-green4!' : x > 1 ? 'bg-amber border-amber4 text-amber-900 dark:text-amber-200' : 'bg-gray:50 border-gray'"
+            :style="{ '--un-bg-opacity': Math.max(0.5, (11 - x) / 10) }"
+          >
+            {{ ([0, 1, 2].includes(x)) ? '' : x }}
+          </div>
         </div>
       </div>
-      <img :src="dataUrl">
-      <a
-        v-if="dataUrl"
-        class="w-max border border-gray:50 rounded-md px2 py1 text-sm hover:bg-gray:10"
-        :href="dataUrl"
-        download="foo.png"
-      >Download</a>
-    </div>
+    </Collapsable>
+
+    <Collapsable v-if="dataUrl" label="Download" :default="true">
+      <div flex="~ col gap-2" max-w-150 p2>
+        <img :src="dataUrl">
+        <a
+          class="w-max border border-gray:50 rounded-md px2 py1 text-sm hover:bg-gray:10"
+          :href="dataUrl"
+          download="foo.png"
+        >Download</a>
+      </div>
+    </Collapsable>
 
     <div relative h-full max-h-150 max-w-150 w-full text="10px md:sm">
       <video
