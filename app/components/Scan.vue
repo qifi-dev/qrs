@@ -116,7 +116,7 @@ const endTime = ref(0)
 const dataUrl = ref<string>()
 const dots = useTemplateRef<HTMLDivElement[]>('dots')
 const status = ref<number[]>([])
-const decodedBlocks = computed(() => status.value.filter(i => i === 2).length)
+const decodedBlocks = computed(() => status.value.filter(i => i === 1).length)
 const receivedBytes = computed(() => decoder.value.encodedCount * (decoder.value.meta?.data.length ?? 0))
 
 function getStatus() {
@@ -235,6 +235,8 @@ async function scanFrame() {
 function now() {
   return performance.now()
 }
+
+const inspect = ref(false)
 </script>
 
 <template>
@@ -244,25 +246,34 @@ function now() {
         v-for="item of cameras" :key="item.deviceId" :class="{
           'text-blue': selectedCamera === item.deviceId,
         }"
-        class="border rounded-md px2 py1 text-sm shadow-sm"
+        px2 py1 text-sm shadow-sm
+        border="~ gray/25 rounded-lg"
         @click="selectedCamera = item.deviceId"
       >
         {{ item.label }}
       </button>
     </div>
 
-    <pre v-if="error" text-red v-text="error" />
+    <pre v-if="error" overflow-x-auto text-red v-text="error" />
 
-    <p w-full of-x-auto ws-nowrap font-mono :class="endTime ? 'text-green' : ''">
-      <span>Checksum: {{ sum }}</span><br>
-      <span>Indices: {{ k }}</span><br>
-      <span>Decoded: {{ decodedBlocks }}</span><br>
-      <span>Received blocks: {{ decoder.encodedCount }}</span><br>
-      <span>Expected bytes: {{ (length / 1024).toFixed(2) }} KB</span><br>
-      <span>Received bytes: {{ (receivedBytes / 1024).toFixed(2) }} KB ({{ length === 0 ? 0 : (receivedBytes / length * 100).toFixed(2) }}%)</span><br>
-      <span>Timepassed: {{ (((endTime || now()) - startTime) / 1000).toFixed(2) }} s</span><br>
-      <span>Average bitrate: {{ (receivedBytes / 1024 / ((endTime || now()) - startTime) * 1000).toFixed(2) }} Kbps</span><br>
-    </p>
+    <div flex="~ col" border="~ gray/25 rounded-lg" divide="y dashed gray/25" max-w-150 of-hidden shadow-sm>
+      <button
+        px2 py1 text-sm
+        @click="inspect = !inspect"
+      >
+        Inspect {{ inspect ? '▲' : '▼' }}
+      </button>
+      <p w-full of-x-auto ws-nowrap px2 py1 font-mono :class="endTime ? 'text-green' : ''">
+        <span>Checksum: {{ sum }}</span><br>
+        <span>Indices: {{ k }}</span><br>
+        <span>Decoded: {{ decodedBlocks }}</span><br>
+        <span>Received blocks: {{ decoder.encodedCount }}</span><br>
+        <span>Expected bytes: {{ (length / 1024).toFixed(2) }} KB</span><br>
+        <span>Received bytes: {{ (receivedBytes / 1024).toFixed(2) }} KB ({{ length === 0 ? 0 : (receivedBytes / length * 100).toFixed(2) }}%)</span><br>
+        <span>Timepassed: {{ (((endTime || now()) - startTime) / 1000).toFixed(2) }} s</span><br>
+        <span>Average bitrate: {{ (receivedBytes / 1024 / ((endTime || now()) - startTime) * 1000).toFixed(2) }} Kbps</span><br>
+      </p>
+    </div>
     <div border="~ gray/25 rounded-lg" flex="~ col gap-2" mb--4 max-w-150 p2>
       <div flex="~ gap-0.4 wrap">
         <div
@@ -288,15 +299,15 @@ function now() {
       >Download</a>
     </div>
 
-    <div relative h-full max-h-150 max-w-150 w-full>
+    <div relative h-full max-h-150 max-w-150 w-full text="10px md:sm">
       <video
         ref="video"
         autoplay muted playsinline :controls="false"
         aspect-square h-full w-full rounded-lg
       />
-      <div absolute left-1 top-1 border border-gray:50 rounded-md bg-black:75 px2 py1 text-sm text-white font-mono shadow>
+      <div absolute left-1 top-1 border border-gray:50 rounded-md bg-black:75 px2 py1 text-white font-mono shadow>
         <template v-if="k">
-          {{ decodedBlocks }} / {{ k }}
+          {{ (receivedBytes / 1024).toFixed(2) }} / {{ (length / 1024).toFixed(2) }} KB <span text-neutral-400>({{ (receivedBytes / length * 100).toFixed(2) }}%)</span>
         </template>
         <template v-else>
           No Data
@@ -309,8 +320,8 @@ function now() {
         <div i-carbon:circle-dash animate-spin animate-duration-5000 text-3xl />
         <p>No Signal</p>
       </div>
-      <p absolute right-1 top-1 border border-gray:50 rounded-md bg-black:75 px2 py1 text-sm text-white font-mono shadow>
-        {{ shutterCount }} | {{ fps.toFixed(0) }} hz | {{ currentValidBytesSpeedFormatted }} <span text-neutral-400>({{ currentBytesFormatted }})</span>
+      <p absolute right-1 top-1 border border-gray:50 rounded-md bg-black:75 px2 py1 text-white font-mono shadow>
+        {{ fps.toFixed(0) }} hz | {{ currentValidBytesSpeedFormatted }} <span text-neutral-400>({{ currentBytesFormatted }})</span>
       </p>
     </div>
 
