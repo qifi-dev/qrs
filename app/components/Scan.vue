@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { binaryToBlock, createDecoder } from '~~/utils/lt-code'
+import { binaryToBlock, ContentType, createDecoder } from '~~/utils/lt-code'
 import { toUint8Array } from 'js-base64'
 import { scan } from 'qr-scanner-wechat'
 import { useBytesRate } from '~/composables/timeseries'
@@ -91,6 +91,7 @@ onMounted(async () => {
       }
       catch (e) {
         error.value = e
+        console.error(e)
       }
     },
     () => props.speed,
@@ -124,6 +125,8 @@ async function connectCamera() {
     video.value!.play()
   }
   catch (e) {
+    console.error(e)
+
     if ((e as Error).name === 'NotAllowedError' || (e as Error).name === 'NotFoundError') {
       cameraSignalStatus.value = CameraSignalStatus.NotGranted
       return
@@ -134,9 +137,11 @@ async function connectCamera() {
 }
 
 const decoder = ref(createDecoder())
+
 const k = ref(0)
 const bytes = ref(0)
 const checksum = ref(0)
+
 const cached = new Set<string>()
 const startTime = ref(0)
 const endTime = ref(0)
@@ -146,6 +151,10 @@ const dots = useTemplateRef<HTMLDivElement[]>('dots')
 const status = ref<number[]>([])
 const decodedBlocks = computed(() => status.value.filter(i => i === 1).length)
 const receivedBytes = computed(() => decoder.value.encodedCount * (decoder.value.meta?.data.length ?? 0))
+
+const filename = ref<string | undefined>()
+const contentType = ref<string | undefined>()
+const textContent = ref<string | undefined>()
 
 function getStatus() {
   const array = Array.from({ length: k.value }, () => 0)
@@ -178,6 +187,49 @@ function pluse(index: number) {
   el.style.transition = 'transform 0.3s, filter 0.3s'
   el.style.transform = 'none'
   el.style.filter = 'none'
+}
+
+/**
+ * Proposed ideal processing method for decoded data from LT codes
+ *
+ * @param data - The decoded data from LT codes
+ * @param type - The content type of the merged data, specified when encoding
+ */
+function toData(data: Uint8Array, type: ContentType): Uint8Array | string | any {
+  // Binary data, no need to process
+  if (type === ContentType.Binary) {
+    return data
+  }
+  // Text data, decode and return
+  else if (type === ContentType.Text) {
+    return new TextDecoder().decode(data)
+  }
+  // Base64 encoded JSON data, decode and return
+  else {
+    const decodedFromBase64 = toUint8Array(new TextDecoder().decode(data))
+    const decodedJSONBodyStr = new TextDecoder().decode(decodedFromBase64)
+    const decodedJSONBody = JSON.parse(decodedJSONBodyStr)
+    return decodedJSONBody
+  }
+}
+
+/**
+ * Proposed ideal method to convert data to a data URL
+ *
+ * @param data - The data to convert
+ * @param type - The content type of the data
+ */
+function toDataURL(data: Uint8Array | string | any, type: ContentType): string {
+  if (type === ContentType.Binary) {
+    return URL.createObjectURL(new Blob([data], { type: 'application/octet-stream' }))
+  }
+  else if (type === ContentType.Text) {
+    return URL.createObjectURL(new Blob([new TextEncoder().encode(data)], { type: 'text/plain' }))
+  }
+  else {
+    const json = JSON.stringify(data)
+    return URL.createObjectURL(new Blob([new TextEncoder().encode(json)], { type: 'application/json' }))
+  }
 }
 
 async function scanFrame() {
@@ -231,13 +283,36 @@ async function scanFrame() {
 
   cached.add(result.text)
   k.value = data.k
+
   data.indices.map(i => pluse(i))
   const success = decoder.value.addBlock(data)
   status.value = getStatus()
   if (success) {
     endTime.value = performance.now()
+
     const merged = decoder.value.getDecoded()!
-    dataUrl.value = URL.createObjectURL(new Blob([merged], { type: 'application/octet-stream' }))
+
+    const mergedData = toData(merged, data.contentType)
+    dataUrl.value = toDataURL(mergedData, data.contentType)
+
+    if (data.contentType === ContentType.Text) {
+      textContent.value = mergedData
+    }
+    if (data.contentType === ContentType.JSON) {
+      const jsonBody = mergedData as unknown as {
+        filename: string
+        contentType: string
+        content: string
+      }
+
+      filename.value = jsonBody.filename
+      contentType.value = jsonBody.contentType
+
+      const payloadData = toUint8Array(jsonBody.content)
+      if (contentType.value.startsWith('text/')) {
+        textContent.value = new TextDecoder().decode(payloadData)
+      }
+    }
   }
   // console.log({ data })
   // if (Array.isArray(data)) {
@@ -289,6 +364,8 @@ function now() {
 
     <Collapsable>
       <p w-full of-x-auto ws-nowrap px2 py1 font-mono :class="endTime ? 'text-green' : ''">
+        <span>Filename: {{ filename }}</span><br>
+        <span>Content-Type: {{ contentType }}</span><br>
         <span>Checksum: {{ checksum }}</span><br>
         <span>Indices: {{ k }}</span><br>
         <span>Decoded: {{ decodedBlocks }}</span><br>
@@ -322,12 +399,17 @@ function now() {
 
     <Collapsable v-if="dataUrl" label="Download" :default="true">
       <div flex="~ col gap-2" max-w-150 p2>
-        <img :src="dataUrl">
+        <img v-if="contentType?.startsWith('image/')" :src="dataUrl">
+        <p v-if="contentType?.startsWith('text/')" :src="dataUrl">
+          {{ textContent }}
+        </p>
         <a
-          class="w-max border border-gray:50 rounded-md px2 py1 text-sm hover:bg-gray:10"
           :href="dataUrl"
-          download="foo.png"
-        >Download</a>
+          :download="filename"
+          class="w-max border border-gray:50 rounded-md px2 py1 text-sm hover:bg-gray:10"
+        >
+          Download
+        </a>
       </div>
     </Collapsable>
 

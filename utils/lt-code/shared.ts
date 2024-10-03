@@ -1,3 +1,18 @@
+export enum ContentType {
+  /**
+   * Binary data
+   */
+  Binary,
+  /**
+   * Plain text
+   */
+  Text,
+  /**
+   * JSON data
+   */
+  JSON,
+}
+
 export interface EncodedHeader {
   /**
    * Number of original data blocks
@@ -11,6 +26,11 @@ export interface EncodedHeader {
    * Checksum, CRC32 and XOR of k
    */
   checksum: number
+  /**
+   * Content Type, @see ContentType .
+   * For converting Content-Type string to ContentType enum, use @see mapContentType .
+   */
+  contentType: number
 }
 
 export interface EncodedBlock extends EncodedHeader {
@@ -19,19 +39,23 @@ export interface EncodedBlock extends EncodedHeader {
 }
 
 export function blockToBinary(block: EncodedBlock): Uint8Array {
-  const { k, bytes, checksum, indices, data } = block
+  const { k, bytes, checksum, indices, data, contentType } = block
   const header = new Uint32Array([
     indices.length,
     ...indices,
     k,
     bytes,
     checksum,
+    contentType,
   ])
+
+  console.log('to:', bytes, checksum)
   const binary = new Uint8Array(header.length * 4 + data.length)
   let offset = 0
   binary.set(new Uint8Array(header.buffer), offset)
   offset += header.length * 4
   binary.set(data, offset)
+
   return binary
 }
 
@@ -44,13 +68,16 @@ export function binaryToBlock(binary: Uint8Array): EncodedBlock {
     k,
     bytes,
     checksum,
-  ] = headerRest.slice(degree) as [number, number, number]
+    contentType,
+  ] = headerRest.slice(degree) as [number, number, number, number]
+  console.log('from:', bytes, checksum)
   const data = binary.slice(4 * (degree + 4))
 
   return {
     k,
     bytes,
     checksum,
+    contentType,
     indices,
     data,
   }
@@ -72,4 +99,19 @@ export function stringToUint8Array(str: string): Uint8Array {
   }
 
   return data
+}
+
+/**
+ * Convert Content-Type string to @see ContentType enum.
+ *
+ * @param contentType Content-Type string
+ * @returns {ContentType} enum
+ */
+export function mapContentType(contentType: string): ContentType {
+  if (contentType.startsWith('text/'))
+    return ContentType.Text
+  if (contentType.startsWith('application/json'))
+    return ContentType.JSON
+
+  return ContentType.Binary
 }

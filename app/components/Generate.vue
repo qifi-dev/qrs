@@ -1,18 +1,28 @@
 <script lang="ts" setup>
 import type { EncodedBlock } from '~~/utils/lt-code'
-import { blockToBinary, createEncoder } from '~~/utils/lt-code'
-import { fromUint8Array } from 'js-base64'
+import { binaryToBlock, blockToBinary, createEncoder } from '~~/utils/lt-code'
+import { fromUint8Array, toUint8Array } from 'js-base64'
 import { renderSVG } from 'uqr'
 
 const props = withDefaults(defineProps<{
   data: Uint8Array
+  filename?: string
+  contentType?: string
   speed: number
 }>(), {
   speed: 250,
 })
 
+const abBase64 = fromUint8Array(new TextEncoder().encode(JSON.stringify({
+  filename: props.filename,
+  contentType: props.contentType,
+  content: fromUint8Array(props.data),
+})))
+
+const data = new Uint8Array(new TextEncoder().encode(abBase64))
+
 const count = ref(0)
-const encoder = createEncoder(props.data, 1000)
+const encoder = createEncoder(data, 1000, 'application/json')
 const svg = ref<string>()
 const block = shallowRef<EncodedBlock>()
 

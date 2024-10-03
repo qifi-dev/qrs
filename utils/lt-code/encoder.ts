@@ -1,8 +1,8 @@
-import type { EncodedBlock } from './shared'
 import { getChecksum } from './checksum'
+import { type EncodedBlock, mapContentType } from './shared'
 
-export function createEncoder(data: Uint8Array, indicesSize: number) {
-  return new LtEncoder(data, indicesSize)
+export function createEncoder(data: Uint8Array, indicesSize: number, contentType: string = 'application/octet-stream'): LtEncoder {
+  return new LtEncoder(data, indicesSize, contentType)
 }
 
 export class LtEncoder {
@@ -14,6 +14,7 @@ export class LtEncoder {
   constructor(
     public readonly data: Uint8Array,
     public readonly indicesSize: number,
+    public readonly contentType: string = 'application/octet-stream',
   ) {
     this.indices = sliceData(data, indicesSize)
     this.k = this.indices.length
@@ -30,10 +31,20 @@ export class LtEncoder {
       }
     }
 
+    console.log({
+      k: this.k,
+      bytes: this.bytes,
+      checksum: this.checksum,
+      contentType: mapContentType(this.contentType),
+      indices,
+      data,
+    })
+
     return {
       k: this.k,
       bytes: this.bytes,
       checksum: this.checksum,
+      contentType: mapContentType(this.contentType),
       indices,
       data,
     }

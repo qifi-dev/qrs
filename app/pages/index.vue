@@ -9,6 +9,9 @@ enum ReadPhase {
 const error = ref<any>()
 const speed = ref(100)
 const readPhase = ref<ReadPhase>(ReadPhase.Idle)
+
+const filename = ref<string | undefined>()
+const contentType = ref<string | undefined>()
 const data = ref<Uint8Array | null>(null)
 
 async function onFileChange(file?: File) {
@@ -20,8 +23,13 @@ async function onFileChange(file?: File) {
 
   try {
     readPhase.value = ReadPhase.Reading
+
+    filename.value = file.name
+    contentType.value = file.type
+
     const buffer = await file.arrayBuffer()
     data.value = new Uint8Array(buffer)
+
     readPhase.value = ReadPhase.Ready
   }
   catch (e) {
@@ -59,7 +67,10 @@ async function onFileChange(file?: File) {
     </div>
     <div v-if="readPhase === ReadPhase.Ready && data" h-full w-full flex justify-center>
       <Generate
-        :speed="speed" :data="data"
+        :speed="speed"
+        :data="data"
+        :filename="filename"
+        :content-type="contentType"
         min-h="[calc(100vh-250px)]"
         max-w="[calc(100vh-250px)]"
         h-full w-full
