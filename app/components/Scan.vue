@@ -172,7 +172,7 @@ async function scanFrame() {
 
   setFps()
   totalBytesReceived.value += result.text.length
-  totalValidBytesReceived.value = decoder.value.encodedCount * (decoder.value.meta?.data.length || 0)
+  totalValidBytesReceived.value = decoder.value.encodedCount * (decoder.value.meta?.data.length ?? 0)
 
   // Do not process the same QR code twice
   if (cached.has(result.text))
@@ -259,7 +259,7 @@ function now() {
       <span>Decoded: {{ decodedBlocks }}</span><br>
       <span>Received blocks: {{ decoder.encodedCount }}</span><br>
       <span>Expected bytes: {{ (length / 1024).toFixed(2) }} KB</span><br>
-      <span>Received bytes: {{ (receivedBytes / 1024).toFixed(2) }} KB ({{ (receivedBytes / length * 100).toFixed(2) }}%)</span><br>
+      <span>Received bytes: {{ (receivedBytes / 1024).toFixed(2) }} KB ({{ length === 0 ? 0 : (receivedBytes / length * 100).toFixed(2) }}%)</span><br>
       <span>Timepassed: {{ (((endTime || now()) - startTime) / 1000).toFixed(2) }} s</span><br>
       <span>Average bitrate: {{ (receivedBytes / 1024 / ((endTime || now()) - startTime) * 1000).toFixed(2) }} Kbps</span><br>
     </p>
