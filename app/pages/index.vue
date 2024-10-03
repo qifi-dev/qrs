@@ -69,11 +69,7 @@ async function onFileChange(file?: File) {
       min-h="[calc(100vh-250px)]" h-full w-full
       text="neutral-600 dark:neutral-400"
       @file="onFileChange"
-    >
-      <div i-carbon:document-add text-2xl />
-      <p font-semi-bold pl-4 text-2xl>
-        <span>Choose</span>
-      </p>
-    </InputFile>
+    />
+    <DropZone text="Drop File Here" @file="onFileChange" />
   </div>
 </template>
