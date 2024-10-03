@@ -15,6 +15,8 @@ const props = withDefaults(defineProps<{
 })
 
 enum CameraSignalStatus {
+  NotGranted,
+  NotSupported,
   Waiting,
   Ready,
 }
@@ -102,6 +104,11 @@ function disconnectCamera() {
 
 async function connectCamera() {
   try {
+    if (!(navigator && 'mediaDevices' in navigator && 'getUserMedia' in navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function')) {
+      cameraSignalStatus.value = CameraSignalStatus.NotSupported
+      return
+    }
+
     cameraSignalStatus.value = CameraSignalStatus.Waiting
 
     stream = await navigator.mediaDevices.getUserMedia({
@@ -117,6 +124,11 @@ async function connectCamera() {
     video.value!.play()
   }
   catch (e) {
+    if ((e as Error).name === 'NotAllowedError' || (e as Error).name === 'NotFoundError') {
+      cameraSignalStatus.value = CameraSignalStatus.NotGranted
+      return
+    }
+
     error.value = e
   }
 }
@@ -169,6 +181,11 @@ function pluse(index: number) {
 }
 
 async function scanFrame() {
+  if (cameraSignalStatus.value === CameraSignalStatus.NotGranted
+    || cameraSignalStatus.value === CameraSignalStatus.NotSupported) {
+    return
+  }
+
   shutterCount.value += 1
   const canvas = document.createElement('canvas')
   canvas.width = video.value!.videoWidth
@@ -339,10 +356,24 @@ function now() {
       </div>
       <div
         v-if="cameraSignalStatus === CameraSignalStatus.Waiting"
-        top="50%" left="[calc(50%-4.5ch)]" text="neutral-500" absolute flex flex-col items-center gap-2 font-mono
+        top="50%" left="50%" translate-x="[-50%]" text="neutral-500" absolute flex flex-col items-center gap-2 font-mono
       >
         <div i-carbon:circle-dash animate-spin animate-duration-5000 text-3xl />
         <p>No Signal</p>
+      </div>
+      <div
+        v-else-if="cameraSignalStatus === CameraSignalStatus.NotGranted"
+        top="50%" left="50%" translate-x="[-50%]" text="neutral-500" absolute flex flex-col items-center gap-2 font-mono
+      >
+        <div i-carbon:error-outline text-3xl />
+        <p>Not Granted</p>
+      </div>
+      <div
+        v-else-if="cameraSignalStatus === CameraSignalStatus.NotSupported"
+        top="50%" left="50%" translate-x="[-50%]" text="neutral-500" absolute flex flex-col items-center gap-2 font-mono
+      >
+        <div i-carbon:circle-dash text-3xl />
+        <p>Not Supported</p>
       </div>
       <p absolute right-1 top-1 border="~ gray:50 rounded-md" bg-black:75 px2 py1 text-white font-mono shadow>
         {{ fps.toFixed(0) }} hz | {{ currentValidBytesSpeedFormatted }} <span text-neutral-400>({{ currentBytesFormatted }})</span>
