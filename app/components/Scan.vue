@@ -153,6 +153,7 @@ function updateBandwidth(timestamp: number) {
 const decoder = ref(createDecoder())
 const k = ref(0)
 const sum = ref(0)
+const cached = new Set<string>()
 
 const dataUrl = ref<string>()
 const dots = useTemplateRef<HTMLDivElement[]>('dots')
@@ -193,6 +194,7 @@ function pluse(index: number) {
 }
 
 async function scanFrame() {
+  error.value = undefined
   shutterCount.value += 1
   const canvas = document.createElement('canvas')
   canvas.width = video.value!.videoWidth
@@ -200,49 +202,56 @@ async function scanFrame() {
   const ctx = canvas.getContext('2d')!
   ctx.drawImage(video.value!, 0, 0, canvas.width, canvas.height)
   const result = await scan(canvas)
+  if (!result.text)
+    return
+  setFps()
 
-  if (result?.text) {
-    setFps()
-    const binary = toUint8Array(result.text)
-    const data = binaryToBlock(binary)
-    // Data set changed, reset decoder
-    if (sum.value !== data.sum) {
-      decoder.value = createDecoder()
-      sum.value = data.sum
-    }
-    k.value = data.k
-    data.indices.map(i => pluse(i))
-    const success = decoder.value.addBlock([data])
-    status.value = getStatus()
-    if (success) {
-      const merged = decoder.value.getDecoded()!
-      dataUrl.value = URL.createObjectURL(new Blob([merged], { type: 'application/octet-stream' }))
-    }
-    // console.log({ data })
-    // if (Array.isArray(data)) {
-    //   if (data[0] !== id.value) {
-    //     chunks.length = 0
-    //     dataUrl.value = undefined
-    //   }
+  // Do not process the same QR code twice
+  if (cached.has(result.text))
+    return
 
-    //
-
-    //   chunks[data[2]] = data
-    //   pluse(data[2])
-
-    //   if (!length.value)
-    //     return
-    //   if (picked.value.every(i => !!i)) {
-    //     try {
-    //       const merged = merge(picked.value as SliceData[])
-    //       dataUrl.value = URL.createObjectURL(new Blob([merged], { type: 'application/octet-stream' }))
-    //     }
-    //     catch (e) {
-    //       error.value = e
-    //     }
-    //   }
-    // }
+  const binary = toUint8Array(result.text)
+  const data = binaryToBlock(binary)
+  // Data set changed, reset decoder
+  if (sum.value !== data.sum) {
+    decoder.value = createDecoder()
+    sum.value = data.sum
+    cached.clear()
   }
+
+  cached.add(result.text)
+  k.value = data.k
+  data.indices.map(i => pluse(i))
+  const success = decoder.value.addBlock([data])
+  status.value = getStatus()
+  if (success) {
+    const merged = decoder.value.getDecoded()!
+    dataUrl.value = URL.createObjectURL(new Blob([merged], { type: 'application/octet-stream' }))
+  }
+  // console.log({ data })
+  // if (Array.isArray(data)) {
+  //   if (data[0] !== id.value) {
+  //     chunks.length = 0
+  //     dataUrl.value = undefined
+  //   }
+
+  //
+
+  //   chunks[data[2]] = data
+  //   pluse(data[2])
+
+  //   if (!length.value)
+  //     return
+  //   if (picked.value.every(i => !!i)) {
+  //     try {
+  //       const merged = merge(picked.value as SliceData[])
+  //       dataUrl.value = URL.createObjectURL(new Blob([merged], { type: 'application/octet-stream' }))
+  //     }
+  //     catch (e) {
+  //       error.value = e
+  //     }
+  //   }
+  // }
 }
 </script>
 
@@ -299,6 +308,15 @@ async function scanFrame() {
       <p absolute right-1 top-1 border border-gray:50 rounded-md bg-black:75 px2 py1 text-sm text-white font-mono shadow>
         {{ shutterCount }} | {{ fps.toFixed(0) }} hz | {{ currentValidBandwidthFormatted }} (<span text-neutral-400>{{ currentBandwidthFormatted }}</span>)
       </p>
+    </div>
+
+    <div flex="~ gap-1 wrap" max-w-150 text-xs>
+      <div v-for="i, idx of decoder.encodedBlocks" :key="idx" border="~ gray/10 rounded" p1>
+        <template v-for="x, idy of i.indices" :key="x">
+          <span v-if="idy !== 0" op25>, </span>
+          <span :style="{ color: `hsl(${x * 40}, 40%, 60%)` }">{{ x }}</span>
+        </template>
+      </div>
     </div>
   </div>
 </template>
