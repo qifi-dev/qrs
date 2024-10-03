@@ -249,7 +249,6 @@ export class LtDecoder {
           this.decodedData[indices[0]!] = block.data
           this.decodedCount++
           this.encodedBlocks.delete(block)
-          console.log('decoded', indices[0]!, data.slice(0, 5))
           updated = true
         }
       }
