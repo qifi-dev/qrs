@@ -159,10 +159,85 @@ export class LtDecoder {
   public encodedBlocks: Set<EncodedBlock> = new Set()
   public meta: EncodedBlock = undefined!
 
+  public encodedData = new Map<string, EncodedBlock>()
+
   constructor(blocks?: EncodedBlock[]) {
     if (blocks) {
       this.addBlock(blocks)
     }
+  }
+
+  /**
+   * 存储一些中间包含的数据，用于解码
+   * 每收到一个新的包，就遍历它的 ids，将这些 ids 对应的数据也计算一次异或得到新的数据。
+   * 如果这个数据的大小等于 1，那么就说明这个数据已经解码完成，将这个数据存储到 decodedData 中。
+   */
+  addBlock2(blocks: EncodedBlock[]): boolean {
+    blocks = Array.from(blocks)
+    if (!blocks.length) {
+      return false
+    }
+    if (!this.meta) {
+      this.meta = blocks[0]!
+      this.decodedData = Array.from({ length: this.meta.k })
+    }
+
+    const strIncludesSet = new Set<string>()
+    blocks.forEach((block) => {
+      strIncludesSet.add(block.indices.sort((a, b) => a - b).join(','))
+    })
+
+    let count = 0
+    for (const block of blocks) {
+      count++
+      if (count > 250) {
+        throw new Error('Too many blocks')
+      }
+
+      const { data, indices, sum } = block
+      const strIndices = indices.sort((a, b) => a - b).join(',')
+
+      if (sum !== this.meta.sum) {
+        throw new Error('Adding block with different checksum')
+      }
+
+      if (!this.encodedData.has(strIndices)) {
+        this.encodedData.set(strIndices, block)
+        this.encodedBlocks.add(block)
+
+        if (indices.length === 1 && this.decodedData[indices[0]!] == null) {
+          this.decodedData[indices[0]!] = data
+          this.decodedCount++
+        }
+      }
+
+      for (const otherBlock of this.encodedData.values()) {
+        const indicesSet = new Set(indices)
+        const otherIndicesSet = new Set(otherBlock.indices)
+        const inter = intersection(indicesSet, otherIndicesSet)
+        const diff = symmetricDifference(inter, inter)
+        if (inter.size !== 0 && diff.size !== 0) {
+          const newIndices = Array.from(diff)
+          const strNewIndices = newIndices.sort((a, b) => a - b).join(',')
+
+          if (!strIncludesSet.has(strNewIndices) && !this.encodedData.has(strNewIndices)) {
+            strIncludesSet.add(strNewIndices)
+
+            const data = xorUint8Array(block.data, otherBlock.data)
+            const newBlock: EncodedBlock = {
+              ...this.meta,
+              k: newIndices.length,
+              indices: newIndices,
+              data,
+            }
+
+            blocks.push(newBlock)
+          }
+        }
+      }
+    }
+
+    return this.decodedCount === this.meta.k
   }
 
   // Add blocks and decode them on the fly
@@ -185,6 +260,7 @@ export class LtDecoder {
     }
 
     let updated = true
+
     while (updated) {
       updated = false
 
@@ -269,4 +345,26 @@ export function stringToUint8Array(str: string): Uint8Array {
     data[i] = str.charCodeAt(i)
   }
   return data
+}
+
+export function symmetricDifference(a: Set<number>, b: Set<number>): Set<number> {
+  const result = new Set<number>(a)
+  for (const item of b) {
+    if (result.has(item)) {
+      result.delete(item)
+    }
+    else {
+      result.add(item)
+    }
+  }
+  return result
+}
+export function intersection(a: Set<number>, b: Set<number>): Set<number> {
+  const result = new Set<number>()
+  for (const item of a) {
+    if (b.has(item)) {
+      result.add(item)
+    }
+  }
+  return result
 }

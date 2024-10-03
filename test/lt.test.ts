@@ -25,7 +25,7 @@ it('slice binary', { repeats: 10 }, async () => {
 
     const b2 = toUint8Array(str)
     const back = binaryToBlock(b2)
-    const result = decoder.addBlock([back])
+    const result = decoder.addBlock2([back])
     if (result)
       break
   }
