@@ -68,18 +68,29 @@ function checksum(data: Uint8Array): number {
 
 // Use Ideal Soliton Distribution to select degree
 function getRandomDegree(k: number): number {
-  const probability = Math.random()
-  let degree = 1
+  const probabilities: number[] = Array.from({ length: k }, () => 0)
 
+  // Calculate the probabilities of the Ideal Soliton Distribution
+  probabilities[0] = 1 / k // P(1) = 1/k
   for (let d = 2; d <= k; d++) {
-    const prob = 1 / (d * (d - 1))
-    if (probability < prob) {
-      degree = d
-      break
+    probabilities[d - 1] = 1 / (d * (d - 1))
+  }
+
+  // Accumulate the probabilities to generate the cumulative distribution
+  const cumulativeProbabilities: number[] = probabilities.reduce((acc, p, index) => {
+    acc.push(p + (acc[index - 1] || 0))
+    return acc
+  }, [] as number[])
+
+  // Generate a random number between [0,1] and select the corresponding degree in the cumulative probabilities
+  const randomValue = Math.random()
+  for (let i = 0; i < cumulativeProbabilities.length; i++) {
+    if (randomValue < cumulativeProbabilities[i]!) {
+      return i + 1
     }
   }
 
-  return degree
+  return k // Theoretically, this line should never be reached
 }
 
 // Randomly select indices of degree number of original data blocks
@@ -162,6 +173,7 @@ export class LtDecoder {
 
     if (!this.meta) {
       this.meta = blocks[0]!
+      this.decodedData = Array.from({ length: this.meta.k })
     }
 
     for (const block of blocks) {

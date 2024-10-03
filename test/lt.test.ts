@@ -11,9 +11,11 @@ it('slice binary', async () => {
 
   const decoder = createDecoder()
   let count = 0
+  let k = 0
   for (const block of encodeFountain(data, 1000)) {
+    k = block.k
     count += 1
-    if (count > 1000)
+    if (count > k * 3)
       throw new Error('Too many blocks')
     const binary = blockToBinary(block)
     const str = fromUint8Array(binary)
