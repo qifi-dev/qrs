@@ -215,7 +215,7 @@ export class LtDecoder {
         const indicesSet = new Set(indices)
         const otherIndicesSet = new Set(otherBlock.indices)
         const inter = intersection(indicesSet, otherIndicesSet)
-        const diff = symmetricDifference(inter, inter)
+        const diff = symmetricDifference(indicesSet, otherIndicesSet)
         if (inter.size !== 0 && diff.size !== 0) {
           const newIndices = Array.from(diff)
           const strNewIndices = newIndices.sort((a, b) => a - b).join(',')
