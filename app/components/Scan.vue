@@ -2,7 +2,7 @@
 import { binaryToBlock, createDecoder } from '~~/utils/lt-codes'
 import { toUint8Array } from 'js-base64'
 import { scan } from 'qr-scanner-wechat'
-import { useBytesRate, useTimeSeries } from '~/composables/meter'
+import { useBytesRate } from '~/composables/timeseries'
 
 const props = withDefaults(defineProps<{
   speed?: number
