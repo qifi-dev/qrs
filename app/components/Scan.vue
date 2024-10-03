@@ -315,10 +315,10 @@ function now() {
     </Collapsable>
 
     <!-- This is a progress bar that is not accurate but feels comfortable. -->
-    <div v-if="k" relative h-2 max-w-150 rounded-lg bg-black:75 text-white font-mono shadow>
+    <div v-if="k" relative h-4 max-w-150 rounded bg-black:75 text-white font-mono shadow>
       <div
-        absolute inset-y-0 h-full bg-green border="~ green4 rounded-lg"
-        :style="{ width: `${decodedBlocks === k ? 100 : (Math.min(1, receivedBytes / bytes * 0.66) * 100).toFixed(2)}%` }"
+        bg="green-400" border="~ green4 rounded" transition="all ease" absolute inset-y-0 h-full w-full duration-1000
+        :style="{ maxWidth: `${decodedBlocks === k ? 100 : (Math.min(1, receivedBytes / bytes * 0.66) * 100).toFixed(2)}%` }"
       />
     </div>
 
@@ -331,7 +331,7 @@ function now() {
 
       <div absolute left-1 top-1 border="~ gray:50 rounded-md" bg-black:75 px2 py1 text-white font-mono shadow>
         <template v-if="k">
-          {{ (receivedBytes / 1024).toFixed(2) }} / {{ (bytes / 1024).toFixed(2) }} KB <span text-neutral-400>({{ (receivedBytes / bytes * 100).toFixed(2) }}%)</span>
+          <span>{{ (receivedBytes / 1024).toFixed(2) }} / {{ (bytes / 1024).toFixed(2) }} KB <span text-neutral-400>({{ (receivedBytes / bytes * 100).toFixed(2) }}%)</span></span>
         </template>
         <template v-else>
           No Data
