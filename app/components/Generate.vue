@@ -37,8 +37,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <div flex flex-col items-center>
-    <p mb-4 w-full font-mono>
+  <div flex flex-col items-center pb-20>
+    <p mb-4 w-full of-x-auto ws-nowrap font-mono>
       Indices: {{ block?.indices }}<br>
       Total: {{ block?.k }}<br>
       Bytes: {{ ((block?.length || 0) / 1024).toFixed(2) }} KB<br>
