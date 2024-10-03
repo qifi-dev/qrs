@@ -2,6 +2,7 @@
 import { binaryToBlock, createDecoder } from '~~/utils/lt-codes'
 import { toUint8Array } from 'js-base64'
 import { scan } from 'qr-scanner-wechat'
+import { useTransferSpeedMeter } from '~/composables/meter'
 
 const props = withDefaults(defineProps<{
   speed?: number
@@ -13,27 +14,8 @@ const props = withDefaults(defineProps<{
   height: 1080,
 })
 
-const kiloBytesFormatter = new Intl.NumberFormat('en-US', {
-  style: 'unit',
-  unit: 'kilobyte-per-second',
-  unitDisplay: 'short',
-})
-
-// All Bandwidth calculation variables
-const bytesReceivedInLastSecond = ref(0)
-const currentValidBandwidth = ref(0)
-const currentValidBandwidthFormatted = computed(() => {
-  return kiloBytesFormatter.format(currentValidBandwidth.value)
-})
-// Valid Bandwidth calculation variables
-const validBytesReceivedInLastSecond = ref(0)
-const currentBandwidth = ref(0)
-const currentBandwidthFormatted = computed(() => {
-  return kiloBytesFormatter.format(currentBandwidth.value)
-})
-
-let lastUpdateTime = 0
-let animationFrameId: number | null = null
+const { totalBytes: totalBytesReceived, formatted: currentBytesFormatted } = useTransferSpeedMeter({ mode: 'sample-current' })
+const { totalBytes: totalValidBytesReceived, formatted: currentValidBytesSpeedFormatted } = useTransferSpeedMeter({ mode: 'sample-total' })
 
 const { devices } = useDevicesList({
   requestPermissions: true,
@@ -86,16 +68,6 @@ onMounted(async () => {
   )
 })
 
-onMounted(() => {
-  animationFrameId = requestAnimationFrame(updateBandwidth)
-})
-
-onUnmounted(() => {
-  if (animationFrameId !== null) {
-    cancelAnimationFrame(animationFrameId)
-  }
-})
-
 function disconnectCamera() {
   stream?.getTracks().forEach(track => track.stop())
   stream = undefined
@@ -118,36 +90,6 @@ async function connectCamera() {
   catch (e) {
     error.value = e
   }
-}
-
-function updateBandwidth(timestamp: number) {
-  const now = timestamp
-  const elapsedTime = now - lastUpdateTime
-
-  if (elapsedTime >= 1000) {
-    // Calculate bandwidth for the last second
-    currentValidBandwidth.value = Number.parseFloat(
-      (
-        (validBytesReceivedInLastSecond.value / 1024)
-        / (elapsedTime / 1000)
-      ).toFixed(2),
-    )
-
-    currentBandwidth.value = Number.parseFloat(
-      (
-        (bytesReceivedInLastSecond.value / 1024)
-        / (elapsedTime / 1000)
-      ).toFixed(2),
-    )
-
-    // Reset for the next second
-    validBytesReceivedInLastSecond.value = 0
-    bytesReceivedInLastSecond.value = 0
-
-    lastUpdateTime = now
-  }
-
-  requestAnimationFrame(updateBandwidth)
 }
 
 const decoder = ref(createDecoder())
@@ -207,7 +149,10 @@ async function scanFrame() {
   const result = await scan(canvas)
   if (!result.text)
     return
+
   setFps()
+  totalBytesReceived.value += result.text.length
+  totalValidBytesReceived.value = decoder.value.encodedCount * (decoder.value.meta?.data.length || 0)
 
   // Do not process the same QR code twice
   if (cached.has(result.text))
@@ -338,7 +283,7 @@ function now() {
         </template>
       </div>
       <p absolute right-1 top-1 border border-gray:50 rounded-md bg-black:75 px2 py1 text-sm text-white font-mono shadow>
-        {{ shutterCount }} | {{ fps.toFixed(0) }} hz | {{ currentValidBandwidthFormatted }} (<span text-neutral-400>{{ currentBandwidthFormatted }}</span>)
+        {{ shutterCount }} | {{ fps.toFixed(0) }} hz | {{ currentValidBytesSpeedFormatted }} <span text-neutral-400>({{ currentBytesFormatted }})</span>
       </p>
     </div>
 
