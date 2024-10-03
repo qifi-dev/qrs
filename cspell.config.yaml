@@ -4,7 +4,10 @@ dictionaryDefinitions: []
 dictionaries: []
 words:
   - Attributify
+  - composables
   - Nuxt
+  - timeseries
   - unocss
+  - wechat
 ignoreWords: []
 import: []
