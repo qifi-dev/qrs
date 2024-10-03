@@ -152,13 +152,17 @@ function updateBandwidth(timestamp: number) {
 
 const decoder = ref(createDecoder())
 const k = ref(0)
+const length = ref(0)
 const sum = ref(0)
 const cached = new Set<string>()
+const startTime = ref(0)
+const endTime = ref(0)
 
 const dataUrl = ref<string>()
 const dots = useTemplateRef<HTMLDivElement[]>('dots')
 const status = ref<number[]>([])
 const decodedBlocks = computed(() => status.value.filter(i => i === 2).length)
+const receivedBytes = computed(() => decoder.value.encodedCount * (decoder.value.meta?.data.length || 0))
 
 function getStatus() {
   const array = Array.from({ length: k.value }, () => 0)
@@ -194,7 +198,6 @@ function pluse(index: number) {
 }
 
 async function scanFrame() {
-  error.value = undefined
   shutterCount.value += 1
   const canvas = document.createElement('canvas')
   canvas.width = video.value!.videoWidth
@@ -210,13 +213,22 @@ async function scanFrame() {
   if (cached.has(result.text))
     return
 
+  error.value = undefined
   const binary = toUint8Array(result.text)
   const data = binaryToBlock(binary)
   // Data set changed, reset decoder
   if (sum.value !== data.sum) {
     decoder.value = createDecoder()
     sum.value = data.sum
+    length.value = data.length
+    k.value = data.k
+    startTime.value = performance.now()
+    endTime.value = 0
     cached.clear()
+  }
+  // The previous data set is already decoded, skip for any new blocks
+  else if (endTime.value) {
+    return
   }
 
   cached.add(result.text)
@@ -225,6 +237,7 @@ async function scanFrame() {
   const success = decoder.value.addBlock([data])
   status.value = getStatus()
   if (success) {
+    endTime.value = performance.now()
     const merged = decoder.value.getDecoded()!
     dataUrl.value = URL.createObjectURL(new Blob([merged], { type: 'application/octet-stream' }))
   }
@@ -253,6 +266,10 @@ async function scanFrame() {
   //   }
   // }
 }
+
+function now() {
+  return performance.now()
+}
 </script>
 
 <template>
@@ -270,6 +287,16 @@ async function scanFrame() {
     </div>
 
     <pre v-if="error" text-red v-text="error" />
+
+    <p w-full of-x-auto ws-nowrap font-mono :class="endTime ? 'text-green' : ''">
+      <span>Indices: {{ k }}</span><br>
+      <span>Decoded: {{ decodedBlocks }}</span><br>
+      <span>Received blocks: {{ decoder.encodedCount }}</span><br>
+      <span>Expected bytes: {{ (length / 1024).toFixed(2) }} KB</span><br>
+      <span>Received bytes: {{ (receivedBytes / 1024).toFixed(2) }} KB ({{ (receivedBytes / length * 100).toFixed(2) }}%)</span><br>
+      <span>Timepassed: {{ (((endTime || now()) - startTime) / 1000).toFixed(2) }} s</span><br>
+      <span>Average bitrate: {{ (receivedBytes / 1024 / ((endTime || now()) - startTime) * 1000).toFixed(2) }} Kbps</span><br>
+    </p>
     <div border="~ gray/25 rounded-lg" flex="~ col gap-2" mb--4 max-w-150 p2>
       <div flex="~ gap-0.4 wrap">
         <div
