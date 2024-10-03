@@ -1,4 +1,4 @@
-interface EncodingMeta {
+interface EncodedHeader {
   /**
    * Number of original data blocks
    */
@@ -13,12 +13,12 @@ interface EncodingMeta {
   sum: number
 }
 
-export interface EncodingBlock extends EncodingMeta {
+export interface EncodedBlock extends EncodedHeader {
   indices: number[]
   data: Uint8Array
 }
 
-export function blockToBinary(block: EncodingBlock): Uint8Array {
+export function blockToBinary(block: EncodedBlock): Uint8Array {
   const { k, length, sum, indices, data } = block
   const header = new Uint32Array([
     indices.length,
@@ -35,7 +35,7 @@ export function blockToBinary(block: EncodingBlock): Uint8Array {
   return binary
 }
 
-export function binaryToBlock(binary: Uint8Array): EncodingBlock {
+export function binaryToBlock(binary: Uint8Array): EncodedBlock {
   const degree = new Uint32Array(binary.buffer, 0, 4)[0]!
   const headerRest = Array.from(new Uint32Array(binary.buffer, 4, degree + 3))
   const indices = headerRest.slice(0, degree)
@@ -110,11 +110,11 @@ function sliceData(data: Uint8Array, blockSize: number): Uint8Array[] {
   return blocks
 }
 
-export function *encodeFountain(data: Uint8Array, indiceSize: number): Generator<EncodingBlock> {
+export function *encodeFountain(data: Uint8Array, indiceSize: number): Generator<EncodedBlock> {
   const sum = checksum(data)
   const indices = sliceData(data, indiceSize)
   const k = indices.length
-  const meta: EncodingMeta = {
+  const meta: EncodedHeader = {
     k,
     length: data.length,
     sum,
@@ -137,24 +137,25 @@ export function *encodeFountain(data: Uint8Array, indiceSize: number): Generator
   }
 }
 
-export function createDecoder(blocks?: EncodingBlock[]) {
+export function createDecoder(blocks?: EncodedBlock[]) {
   return new LtDecoder(blocks)
 }
 
 export class LtDecoder {
   public decodedData: (Uint8Array | undefined)[] = []
   public decodedCount = 0
-  public encodedBlocks: Set<EncodingBlock> = new Set()
-  public meta: EncodingBlock = undefined!
+  public encodedCount = 0
+  public encodedBlocks: Set<EncodedBlock> = new Set()
+  public meta: EncodedBlock = undefined!
 
-  constructor(blocks?: EncodingBlock[]) {
+  constructor(blocks?: EncodedBlock[]) {
     if (blocks) {
       this.addBlock(blocks)
     }
   }
 
   // Add blocks and decode them on the fly
-  addBlock(blocks: EncodingBlock[]): boolean {
+  addBlock(blocks: EncodedBlock[]): boolean {
     if (!blocks.length) {
       return false
     }
@@ -164,12 +165,23 @@ export class LtDecoder {
     }
 
     for (const block of blocks) {
+      if (block.sum !== this.meta.sum) {
+        throw new Error('Adding block with different checksum')
+      }
       this.encodedBlocks.add(block)
+      this.encodedCount += 1
     }
 
     for (const block of this.encodedBlocks) {
       let { data, indices } = block
 
+      // We already have all the data from this block
+      if (indices.every(index => this.decodedData[index] != null)) {
+        this.encodedBlocks.delete(block)
+        continue
+      }
+
+      // XOR the data
       for (const index of indices) {
         if (this.decodedData[index] != null) {
           data = xorUint8Array(data, this.decodedData[index]!)
@@ -180,7 +192,7 @@ export class LtDecoder {
       block.data = data
       block.indices = indices
 
-      if (indices.length === 1) {
+      if (indices.length === 1 && this.decodedData[indices[0]!] == null) {
         this.decodedData[indices[0]!] = data
         this.decodedCount++
         this.encodedBlocks.delete(block)

@@ -156,6 +156,27 @@ const sum = ref(0)
 
 const dataUrl = ref<string>()
 const dots = useTemplateRef<HTMLDivElement[]>('dots')
+const status = ref<number[]>([])
+const decodedBlocks = computed(() => status.value.filter(i => i === 2).length)
+
+function getStatus() {
+  const array = Array.from({ length: k.value }, () => 0)
+  for (let i = 0; i < k.value; i++) {
+    if (decoder.value.decodedData[i] != null)
+      array[i] = 2
+  }
+  for (const block of decoder.value.encodedBlocks) {
+    for (const i of block.indices) {
+      if (array[i] === 0 || array[i] === 1) {
+        array[i] = 1
+      }
+      else {
+        console.warn(`Unexpected block #${i} status: ${array[i]}`)
+      }
+    }
+  }
+  return array
+}
 
 function pluse(index: number) {
   const el = dots.value?.[index]
@@ -163,7 +184,7 @@ function pluse(index: number) {
     return
   el.style.transition = 'none'
   el.style.transform = 'scale(1.3)'
-  el.style.filter = 'hue-rotate(90deg)'
+  el.style.filter = 'hue-rotate(-90deg)'
   // // force reflow
   void el.offsetWidth
   el.style.transition = 'transform 0.3s, filter 0.3s'
@@ -191,7 +212,9 @@ async function scanFrame() {
     }
     k.value = data.k
     data.indices.map(i => pluse(i))
-    if (decoder.value.addBlock([data])) {
+    const success = decoder.value.addBlock([data])
+    status.value = getStatus()
+    if (success) {
       const merged = decoder.value.getDecoded()!
       dataUrl.value = URL.createObjectURL(new Blob([merged], { type: 'application/octet-stream' }))
     }
@@ -241,13 +264,13 @@ async function scanFrame() {
     <div border="~ gray/25 rounded-lg" flex="~ col gap-2" mb--4 max-w-150 p2>
       <div flex="~ gap-0.4 wrap">
         <div
-          v-for="x, idx in k"
+          v-for="x, idx of status"
           :key="idx"
           ref="dots"
           h-4
           w-4
-          border="~ gray rounded"
-          :class="decoder.decodedData[idx] != null ? 'bg-green border-green4' : 'bg-gray:50'"
+          border="~  rounded"
+          :class="x === 2 ? 'bg-green border-green4!' : x === 1 ? 'bg-amber:50 border-amber4' : 'bg-gray:50 border-gray'"
         />
       </div>
       <img :src="dataUrl">
@@ -267,7 +290,7 @@ async function scanFrame() {
       />
       <div absolute left-1 top-1 border border-gray:50 rounded-md bg-black:75 px2 py1 text-sm text-white font-mono shadow>
         <template v-if="k">
-          {{ Array.from({ length: k }, (_, idx) => decoder.decodedData[idx]).filter(p => !!p).length }} / {{ k }}
+          {{ decodedBlocks }} / {{ k }}
         </template>
         <template v-else>
           No Data

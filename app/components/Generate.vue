@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type { EncodingBlock } from '~~/utils/lt-codes'
+import type { EncodedBlock } from '~~/utils/lt-codes'
 import { blockToBinary, encodeFountain } from '~~/utils/lt-codes'
 import { fromUint8Array } from 'js-base64'
 import { renderSVG } from 'uqr'
@@ -12,9 +12,9 @@ const props = withDefaults(defineProps<{
 })
 
 const count = ref(0)
-const encoder = encodeFountain(props.data, 256)
+const encoder = encodeFountain(props.data, 400)
 const svg = ref<string>()
-const block = shallowRef<EncodingBlock>()
+const block = shallowRef<EncodedBlock>()
 
 onMounted(() => {
   useIntervalFn(() => {
@@ -23,7 +23,7 @@ onMounted(() => {
     block.value = data
     const binary = blockToBinary(data)
     const str = fromUint8Array(binary)
-    svg.value = renderSVG(str, { border: 1, ecc: 'L' })
+    svg.value = renderSVG(str, { border: 1  })
   }, () => props.speed)
 })
 </script>

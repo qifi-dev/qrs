@@ -7,7 +7,7 @@ enum ReadPhase {
 }
 
 const error = ref<any>()
-const speed = ref(50)
+const speed = ref(100)
 const readPhase = ref<ReadPhase>(ReadPhase.Idle)
 const data = ref<Uint8Array | null>(null)
 
