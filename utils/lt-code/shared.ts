@@ -46,7 +46,7 @@ export function binaryToBlock(binary: Uint8Array): EncodedBlock {
     k,
     bytes,
     checksum,
-  ] = headerRest.slice(degree) as [number, number, number, number]
+  ] = headerRest.slice(degree) as [number, number, number]
   const data = binary.slice(4 * (degree + 4))
 
   return {
