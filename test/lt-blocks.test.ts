@@ -7,7 +7,7 @@ function randomBuffer(length: number) {
 
 function createEncoderWithIndices(count: number) {
   const buffer = randomBuffer(count * 100 - 5)
-  const encoder = createEncoder(buffer, 100)
+  const encoder = createEncoder(buffer, 100, false)
   expect(encoder.k).toBe(count)
 
   return {

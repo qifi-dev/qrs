@@ -1,4 +1,5 @@
 import type { EncodedBlock } from './shared'
+import { inflate } from 'pako'
 import { getChecksum } from './checksum'
 import { xorUint8Array } from './shared'
 
@@ -117,11 +118,20 @@ export class LtDecoder {
       }
     })
 
-    const checksum = getChecksum(decodedData, this.meta.k)
-    if (checksum !== this.meta.checksum) {
-      throw new Error('Checksum mismatch')
+    try {
+      const decompressed = inflate(decodedData)
+      const checksum = getChecksum(decompressed, this.meta.k)
+      if (checksum === this.meta.checksum) {
+        return decompressed
+      }
+    }
+    catch {
+      const checksum = getChecksum(decodedData, this.meta.k)
+      if (checksum === this.meta.checksum) {
+        return decodedData
+      }
     }
 
-    return decodedData
+    throw new Error('Checksum mismatch')
   }
 }
