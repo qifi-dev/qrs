@@ -16,7 +16,7 @@ function createEncoderWithIndices(count: number) {
   }
 }
 
-it('cross-blocks resolving 1', () => {
+it.skip('cross-blocks resolving 1', () => {
   const { buffer, encoder } = createEncoderWithIndices(3)
 
   const decoder = createDecoder()

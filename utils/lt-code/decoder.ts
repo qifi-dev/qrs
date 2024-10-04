@@ -1,3 +1,4 @@
+/* eslint-disable no-cond-assign */
 import type { EncodedBlock } from './shared'
 import { inflate } from 'pako'
 import { getChecksum } from './checksum'
@@ -11,7 +12,8 @@ export class LtDecoder {
   public decodedData: (Uint8Array | undefined)[] = []
   public decodedCount = 0
   public encodedCount = 0
-  public encodedBlocks: Set<EncodedBlock> = new Set()
+  public encodedBlocks: Map<string, EncodedBlock> = new Map()
+  public encodedBlockIndexMap: Map<number, Set<EncodedBlock>> = new Map()
   public meta: EncodedBlock = undefined!
 
   constructor(blocks?: EncodedBlock[]) {
@@ -32,65 +34,56 @@ export class LtDecoder {
     if (block.checksum !== this.meta.checksum) {
       throw new Error('Adding block with different checksum')
     }
-    this.encodedBlocks.add(block)
-    this.encodedCount += 1
-
-    this.propagateDecoded()
+    this.propagateDecoded(block)
 
     return this.decodedCount === this.meta.k
   }
 
-  propagateDecoded() {
-    let changed = false
-    for (const block of this.encodedBlocks) {
-      let { data, indices } = block
+  private count = 0
 
-      // We already have all the data from this block
-      if (indices.every(index => this.decodedData[index] != null)) {
-        this.encodedBlocks.delete(block)
-        continue
-      }
+  propagateDecoded(block: EncodedBlock = this.meta) {
+    if (this.count > 100) {
+      throw new Error('Too many blocks, aborting')
+    }
+    const { decodedData, encodedBlockIndexMap } = this
+    let { data, indices } = block
+    let index: number
+    let blocks: Set<EncodedBlock> | undefined
 
-      // XOR the data
-      for (const index of indices) {
-        if (this.decodedData[index] != null) {
-          block.data = data = xorUint8Array(data, this.decodedData[index]!)
-          block.indices = indices = indices.filter(i => i !== index)
-          changed = true
-        }
-      }
+    if (indices.every(i => decodedData[i] != null)) {
+      return
+    }
+    this.encodedCount += 1
 
-      if (indices.length === 1 && this.decodedData[indices[0]!] == null) {
-        this.decodedData[indices[0]!] = block.data
-        this.decodedCount++
-        this.encodedBlocks.delete(block)
-        changed = true
+    // XOR the data
+    // Current block > degree 1, find decoded child degree 1 blocks to decode
+    for (index of indices) {
+      if (decodedData[index] != null) {
+        block.data = data = xorUint8Array(data, decodedData[index]!)
+        block.indices = indices = indices.filter(i => i !== index)
       }
     }
 
-    for (const block of this.encodedBlocks) {
-      const { data, indices } = block
-
-      // Use 1x2x3 XOR 2x3 to get 1
-      if (indices.length >= 3) {
-        const lowerBlocks = Array.from(this.encodedBlocks).filter(i => i.indices.length === indices.length - 1)
-        for (const lower of lowerBlocks) {
-          const extraIndices = indices.filter(i => !lower.indices.includes(i))
-          if (extraIndices.length === 1 && this.decodedData[extraIndices[0]!] == null) {
-            const extraData = xorUint8Array(data, lower.data)
-            const extraIndex = extraIndices[0]!
-            this.decodedData[extraIndex] = extraData
-            this.decodedCount++
-            this.encodedBlocks.delete(lower)
-            changed = true
-          }
-        }
-      }
+    // After decoding, if the block > degree 1, store it as a pending block awaiting decoding
+    if (indices.length > 1) {
+      block.indices.forEach((i) => {
+        encodedBlockIndexMap.get(i)?.add(block) ?? encodedBlockIndexMap.set(i, new Set([block]))
+      })
     }
 
-    // If making some progress, continue
-    if (changed) {
-      this.propagateDecoded()
+    // After decoding, if the block is a degree 1 block, store it in decoded data and find blocks that can be decoded
+    else if (decodedData[index = indices[0]!] == null) {
+      decodedData[index] = block.data
+      this.decodedCount += 1
+
+      if (blocks = encodedBlockIndexMap.get(index)) {
+        this.count += 1
+        encodedBlockIndexMap.delete(index)
+        for (const block of blocks) {
+          this.propagateDecoded(block)
+        }
+        this.count -= 1
+      }
     }
   }
 
