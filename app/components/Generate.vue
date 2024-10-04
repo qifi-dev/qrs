@@ -6,6 +6,8 @@ import { renderSVG } from 'uqr'
 
 const props = withDefaults(defineProps<{
   data: Uint8Array
+  filename?: string
+  contentType?: string
   speed: number
 }>(), {
   speed: 250,

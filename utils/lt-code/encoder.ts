@@ -1,7 +1,7 @@
 import type { EncodedBlock } from './shared'
 import { getChecksum } from './checksum'
 
-export function createEncoder(data: Uint8Array, indicesSize: number) {
+export function createEncoder(data: Uint8Array, indicesSize: number): LtEncoder {
   return new LtEncoder(data, indicesSize)
 }
 

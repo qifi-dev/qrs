@@ -27,11 +27,13 @@ export function blockToBinary(block: EncodedBlock): Uint8Array {
     bytes,
     checksum,
   ])
+
   const binary = new Uint8Array(header.length * 4 + data.length)
   let offset = 0
   binary.set(new Uint8Array(header.buffer), offset)
   offset += header.length * 4
   binary.set(data, offset)
+
   return binary
 }
 
@@ -63,13 +65,4 @@ export function xorUint8Array(a: Uint8Array, b: Uint8Array): Uint8Array {
   }
 
   return result
-}
-
-export function stringToUint8Array(str: string): Uint8Array {
-  const data = new Uint8Array(str.length)
-  for (let i = 0; i < str.length; i++) {
-    data[i] = str.charCodeAt(i)
-  }
-
-  return data
 }
