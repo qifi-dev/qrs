@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { binaryToBlock, createDecoder } from '~~/utils/lt-code'
-import { readFileHeaderMetaFromBuffer, readMetaFromBuffer } from '~~/utils/lt-code/binary-meta'
+import { readFileHeaderMetaFromBuffer } from '~~/utils/lt-code/binary-meta'
 import { toUint8Array } from 'js-base64'
 import { scan } from 'qr-scanner-wechat'
 import { useBytesRate } from '~/composables/timeseries'
