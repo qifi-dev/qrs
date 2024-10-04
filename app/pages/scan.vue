@@ -1,19 +1,21 @@
 <script lang="ts" setup>
-const speed = ref(16)
+const fps = ref(30)
+
+const throttledFps = useDebounce(fps, 500)
 </script>
 
 <template>
   <div px-4 pt-4 space-y-10>
-    <Scan :speed="speed" />
+    <Scan :max-scans-per-second="throttledFps" />
     <div max-w-150 w-full inline-flex flex-row items-center>
       <span min-w-40>
-        <span pr-2 text-zinc-400>Speed</span>
-        <span font-mono>{{ speed.toFixed(0) }}ms</span>
+        <span pr-2 text-zinc-400>Ideal scans</span>
+        <span font-mono>{{ fps.toFixed(0) }}hz</span>
       </span>
       <InputSlide
-        v-model="speed"
+        v-model="fps"
         :min="1"
-        :max="100"
+        :max="120"
         smooth
         w-full flex-1
       />

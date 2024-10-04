@@ -8,9 +8,9 @@ const props = withDefaults(defineProps<{
   data: Uint8Array
   filename?: string
   contentType?: string
-  speed: number
+  maxScansPerSecond: number
 }>(), {
-  speed: 250,
+  maxScansPerSecond: 20,
 })
 
 const count = ref(0)
@@ -34,7 +34,7 @@ onMounted(() => {
     const now = performance.now()
     renderTime.value = now - frame
     frame = now
-  }, () => props.speed)
+  }, () => 1000 / props.maxScansPerSecond)
 })
 </script>
 
