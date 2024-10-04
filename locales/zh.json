@@ -1,0 +1,15 @@
+{
+  "nav": {
+    "transfer": "传输",
+    "receive": "接收",
+    "github": "GitHub"
+  },
+  "index": {
+    "changeFile": "更改文件",
+    "idealFPS": "理想帧率",
+    "dropFile": "将文件拖放到此处或点击选择"
+  },
+  "scan": {
+    "idealScans": "理想扫描率"
+  }
+}

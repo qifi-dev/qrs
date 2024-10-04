@@ -8,19 +8,27 @@
             Qrs
           </h1>
         </div>
-        <nav class="flex gap-6 text-sm md:text-base">
+        <nav class="flex items-center gap-6 text-sm md:text-base">
           <NuxtLink to="/" class="nav-link">
             <span i-carbon-upload class="mr-1 inline-block" />
-            Transfer
+            {{ $t('nav.transfer') }}
           </NuxtLink>
           <NuxtLink to="/scan" class="nav-link">
             <span i-carbon-download class="mr-1 inline-block" />
-            Receive
+            {{ $t('nav.receive') }}
           </NuxtLink>
           <a href="https://github.com/qqrss/qrs" target="_blank" class="nav-link">
             <span i-carbon:logo-github class="mr-1 inline-block" />
-            GitHub
+            {{ $t('nav.github') }}
           </a>
+          <select v-model="$i18n.locale" class="border border-gray-300 rounded bg-white px-2 py-1 text-gray-800 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200">
+            <option value="en">
+              English
+            </option>
+            <option value="zh">
+              中文
+            </option>
+          </select>
         </nav>
       </div>
     </header>

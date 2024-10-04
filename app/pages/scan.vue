@@ -12,7 +12,7 @@ const throttledFps = useDebounce(fps, 500)
     <div class="rounded-lg bg-white p-6 shadow-md dark:bg-gray-800">
       <div class="max-w-xl w-full inline-flex flex-row items-center">
         <span class="mr-4 min-w-[160px]">
-          <span class="text-gray-600 dark:text-gray-400">Ideal scans</span>
+          <span class="text-gray-600 dark:text-gray-400">{{ $t('scan.idealScans') }}</span>
           <span class="ml-2 text-gray-800 font-mono dark:text-gray-200">{{ fps.toFixed(0) }}hz</span>
         </span>
         <InputSlide

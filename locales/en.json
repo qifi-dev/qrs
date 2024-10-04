@@ -1,0 +1,15 @@
+{
+  "nav": {
+    "transfer": "Transfer",
+    "receive": "Receive",
+    "github": "GitHub"
+  },
+  "index": {
+    "changeFile": "Change File",
+    "idealFPS": "Ideal FPS",
+    "dropFile": "Drop a file here or click to select"
+  },
+  "scan": {
+    "idealScans": "Ideal scans"
+  }
+}

@@ -54,13 +54,13 @@ async function onFileChange(file?: File) {
           <div class="flex items-center px-4 py-2 text-gray-700 dark:text-gray-300">
             <div i-carbon:document-add class="mr-2 text-lg" />
             <p class="whitespace-nowrap font-semibold">
-              Change File
+              {{ $t('index.changeFile') }}
             </p>
           </div>
         </InputFile>
         <div class="w-full flex flex-row items-center">
           <span class="mr-4 min-w-[120px]">
-            <span class="text-gray-600 dark:text-gray-400">Ideal FPS</span>
+            <span class="text-gray-600 dark:text-gray-400">{{ $t('index.idealFPS') }}</span>
             <span class="ml-2 text-gray-800 font-mono dark:text-gray-200">{{ throttledFps.toFixed(0) }}hz</span>
           </span>
           <InputSlide
@@ -90,7 +90,7 @@ async function onFileChange(file?: File) {
       <div class="text-center">
         <div i-carbon:cloud-upload class="mb-4 text-6xl" />
         <p class="text-lg font-semibold">
-          Drop a file here or click to select
+          {{ $t('index.dropFile') }}
         </p>
       </div>
     </InputFile>

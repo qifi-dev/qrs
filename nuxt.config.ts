@@ -10,6 +10,7 @@ export default defineNuxtConfig({
     '@nuxtjs/color-mode',
     '@vite-pwa/nuxt',
     '@nuxt/eslint',
+    '@nuxtjs/i18n',
   ],
 
   experimental: {
@@ -81,4 +82,18 @@ export default defineNuxtConfig({
   },
 
   compatibilityDate: '2024-08-14',
+  i18n: {
+    locales: [
+      { code: 'en', iso: 'en-US', file: 'en.json' },
+      { code: 'zh', iso: 'zh-CN', file: 'zh.json' },
+    ],
+    defaultLocale: 'en',
+    detectBrowserLanguage: {
+      useCookie: true,
+      cookieKey: 'i18n_redirected',
+      redirectOn: 'root',
+    },
+    lazy: true,
+    langDir: '/locales/',
+  },
 })
