@@ -1,8 +1,9 @@
 import type { EncodedBlock } from './shared'
+import { deflate } from 'pako'
 import { getChecksum } from './checksum'
 
-export function createEncoder(data: Uint8Array, indicesSize: number): LtEncoder {
-  return new LtEncoder(data, indicesSize)
+export function createEncoder(data: Uint8Array, indicesSize: number, compress = true): LtEncoder {
+  return new LtEncoder(data, indicesSize, compress)
 }
 
 export class LtEncoder {
@@ -10,15 +11,18 @@ export class LtEncoder {
   public readonly indices: Uint8Array[]
   public readonly checksum: number
   public readonly bytes: number
+  public readonly compressed: Uint8Array
 
   constructor(
     public readonly data: Uint8Array,
     public readonly indicesSize: number,
+    public readonly compress = true,
   ) {
-    this.indices = sliceData(data, indicesSize)
+    this.compressed = compress ? deflate(data) : data
+    this.indices = sliceData(this.compressed, indicesSize)
     this.k = this.indices.length
-    this.checksum = getChecksum(data, this.k)
-    this.bytes = data.length
+    this.checksum = getChecksum(this.data, this.k)
+    this.bytes = this.compressed.length
   }
 
   createBlock(indices: number[]): EncodedBlock {
