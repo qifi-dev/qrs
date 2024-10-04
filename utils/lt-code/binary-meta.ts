@@ -10,13 +10,13 @@ export function mergeUint8Arrays(arrays: Uint8Array[]) {
 
   arrays.forEach((arr) => {
     const length = arr.length
-    // 將長度存成 4 bytes 的 Uint32
+    // Store the length as a 4-byte Uint32
     mergedArray[offset++] = (length >> 24) & 0xFF
     mergedArray[offset++] = (length >> 16) & 0xFF
     mergedArray[offset++] = (length >> 8) & 0xFF
     mergedArray[offset++] = length & 0xFF
 
-    // 複製 Uint8Array 到合併數組中
+    // Copy data
     mergedArray.set(arr, offset)
     offset += length
   })
@@ -32,13 +32,13 @@ export function splitUint8Arrays(mergedArray: Uint8Array): Uint8Array[] {
   let offset = 0
 
   while (offset < mergedArray.length) {
-    // 讀取 Uint8Array 的長度 (從 4 bytes)
+    // Read chunk length
     const length = (mergedArray[offset++]! << 24)
       | (mergedArray[offset++]! << 16)
       | (mergedArray[offset++]! << 8)
       | mergedArray[offset++]!
 
-    // 根據長度切割出原始 Uint8Array
+    // Slice the chunk
     const arr = mergedArray.slice(offset, offset + length)
     arrays.push(arr)
     offset += length
