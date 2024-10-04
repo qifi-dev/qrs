@@ -1,5 +1,6 @@
 <script lang="ts" setup>
-import { binaryToBlock, ContentType, createDecoder } from '~~/utils/lt-code'
+import { binaryToBlock, createDecoder } from '~~/utils/lt-code'
+import { readFileHeaderMetaFromBuffer, readMetaFromBuffer } from '~~/utils/lt-code/binary-meta'
 import { toUint8Array } from 'js-base64'
 import { scan } from 'qr-scanner-wechat'
 import { useBytesRate } from '~/composables/timeseries'
@@ -190,45 +191,21 @@ function pluse(index: number) {
 }
 
 /**
- * Proposed ideal processing method for decoded data from LT codes
- *
- * @param data - The decoded data from LT codes
- * @param type - The content type of the merged data, specified when encoding
- */
-function toData(data: Uint8Array, type: ContentType): Uint8Array | string | any {
-  // Binary data, no need to process
-  if (type === ContentType.Binary) {
-    return data
-  }
-  // Text data, decode and return
-  else if (type === ContentType.Text) {
-    return new TextDecoder().decode(data)
-  }
-  // Base64 encoded JSON data, decode and return
-  else {
-    const decodedFromBase64 = toUint8Array(new TextDecoder().decode(data))
-    const decodedJSONBodyStr = new TextDecoder().decode(decodedFromBase64)
-    const decodedJSONBody = JSON.parse(decodedJSONBodyStr)
-    return decodedJSONBody
-  }
-}
-
-/**
  * Proposed ideal method to convert data to a data URL
  *
  * @param data - The data to convert
  * @param type - The content type of the data
  */
-function toDataURL(data: Uint8Array | string | any, type: ContentType): string {
-  if (type === ContentType.Binary) {
-    return URL.createObjectURL(new Blob([data], { type: 'application/octet-stream' }))
-  }
-  else if (type === ContentType.Text) {
+function toDataURL(data: Uint8Array | string | any, type: string): string {
+  if (type.startsWith('text/')) {
     return URL.createObjectURL(new Blob([new TextEncoder().encode(data)], { type: 'text/plain' }))
   }
-  else {
+  else if (type === 'application/json') {
     const json = JSON.stringify(data)
     return URL.createObjectURL(new Blob([new TextEncoder().encode(json)], { type: 'application/json' }))
+  }
+  else {
+    return URL.createObjectURL(new Blob([data], { type: 'application/octet-stream' }))
   }
 }
 
@@ -291,27 +268,14 @@ async function scanFrame() {
     endTime.value = performance.now()
 
     const merged = decoder.value.getDecoded()!
+    const [mergedData, meta] = readFileHeaderMetaFromBuffer(merged)
+    dataUrl.value = toDataURL(mergedData, meta.contentType)
 
-    const mergedData = toData(merged, data.contentType)
-    dataUrl.value = toDataURL(mergedData, data.contentType)
+    filename.value = meta.filename
+    contentType.value = meta.contentType
 
-    if (data.contentType === ContentType.Text) {
-      textContent.value = mergedData
-    }
-    if (data.contentType === ContentType.JSON) {
-      const jsonBody = mergedData as unknown as {
-        filename: string
-        contentType: string
-        content: string
-      }
-
-      filename.value = jsonBody.filename
-      contentType.value = jsonBody.contentType
-
-      const payloadData = toUint8Array(jsonBody.content)
-      if (contentType.value.startsWith('text/')) {
-        textContent.value = new TextDecoder().decode(payloadData)
-      }
+    if (contentType.value.startsWith('text/')) {
+      textContent.value = new TextDecoder().decode(mergedData)
     }
   }
   // console.log({ data })

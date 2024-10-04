@@ -53,14 +53,28 @@ export function appendMetaToBuffer<T>(data: Uint8Array, meta: T): Uint8Array {
   return mergeUint8Arrays([metaBuffer, data])
 }
 
+export function appendFileHeaderMetaToBuffer(data: Uint8Array, meta: { filename?: string, contentType?: string }): Uint8Array {
+  return appendMetaToBuffer(data, meta)
+}
+
 export function readMetaFromBuffer<T>(buffer: Uint8Array): [data: Uint8Array, meta: T] {
   const splitted = splitUint8Arrays(buffer) as [Uint8Array, Uint8Array]
   if (splitted.length !== 2) {
     throw new Error('Invalid buffer')
   }
+
   const [metaBuffer, data] = splitted
   const meta = JSON.parse(uint8ArrayToString(metaBuffer!))
   return [data, meta]
+}
+
+export function readFileHeaderMetaFromBuffer(buffer: Uint8Array): [data: Uint8Array, meta: { filename?: string, contentType: string }] {
+  const [data, meta] = readMetaFromBuffer<{ filename?: string, contentType?: string }>(buffer)
+  if (!meta.contentType) {
+    meta.contentType = 'application/octet-stream'
+  }
+
+  return [data, meta] as [Uint8Array, { filename?: string, contentType: string }]
 }
 
 export function stringToUint8Array(str: string): Uint8Array {

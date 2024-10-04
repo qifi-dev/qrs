@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import { appendFileHeaderMetaToBuffer, appendMetaToBuffer } from '~~/utils/lt-code/binary-meta'
+
 enum ReadPhase {
   Idle,
   Reading,
@@ -28,7 +30,10 @@ async function onFileChange(file?: File) {
     contentType.value = file.type
 
     const buffer = await file.arrayBuffer()
-    data.value = new Uint8Array(buffer)
+    data.value = appendFileHeaderMetaToBuffer(new Uint8Array(buffer), {
+      filename: filename.value,
+      contentType: contentType.value,
+    })
 
     readPhase.value = ReadPhase.Ready
   }

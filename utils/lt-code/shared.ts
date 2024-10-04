@@ -1,18 +1,3 @@
-export enum ContentType {
-  /**
-   * Binary data
-   */
-  Binary,
-  /**
-   * Plain text
-   */
-  Text,
-  /**
-   * JSON data
-   */
-  JSON,
-}
-
 export interface EncodedHeader {
   /**
    * Number of original data blocks
@@ -26,11 +11,6 @@ export interface EncodedHeader {
    * Checksum, CRC32 and XOR of k
    */
   checksum: number
-  /**
-   * Content Type, @see ContentType .
-   * For converting Content-Type string to ContentType enum, use @see mapContentType .
-   */
-  contentType: number
 }
 
 export interface EncodedBlock extends EncodedHeader {
@@ -39,17 +19,15 @@ export interface EncodedBlock extends EncodedHeader {
 }
 
 export function blockToBinary(block: EncodedBlock): Uint8Array {
-  const { k, bytes, checksum, indices, data, contentType } = block
+  const { k, bytes, checksum, indices, data } = block
   const header = new Uint32Array([
     indices.length,
     ...indices,
     k,
     bytes,
     checksum,
-    contentType,
   ])
 
-  console.log('to:', bytes, checksum)
   const binary = new Uint8Array(header.length * 4 + data.length)
   let offset = 0
   binary.set(new Uint8Array(header.buffer), offset)
@@ -68,16 +46,13 @@ export function binaryToBlock(binary: Uint8Array): EncodedBlock {
     k,
     bytes,
     checksum,
-    contentType,
   ] = headerRest.slice(degree) as [number, number, number, number]
-  console.log('from:', bytes, checksum)
   const data = binary.slice(4 * (degree + 4))
 
   return {
     k,
     bytes,
     checksum,
-    contentType,
     indices,
     data,
   }
@@ -90,19 +65,4 @@ export function xorUint8Array(a: Uint8Array, b: Uint8Array): Uint8Array {
   }
 
   return result
-}
-
-/**
- * Convert Content-Type string to @see ContentType enum.
- *
- * @param contentType Content-Type string
- * @returns {ContentType} enum
- */
-export function mapContentType(contentType: string): ContentType {
-  if (contentType.startsWith('text/'))
-    return ContentType.Text
-  if (contentType.startsWith('application/json'))
-    return ContentType.JSON
-
-  return ContentType.Binary
 }
