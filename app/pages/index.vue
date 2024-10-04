@@ -9,7 +9,8 @@ enum ReadPhase {
 }
 
 const error = ref<any>()
-const speed = ref(100)
+const fps = ref(20)
+const throttledFps = useDebounce(fps, 500)
 const readPhase = ref<ReadPhase>(ReadPhase.Idle)
 
 const filename = ref<string | undefined>()
@@ -58,13 +59,13 @@ async function onFileChange(file?: File) {
       </InputFile>
       <div w-full inline-flex flex-row items-center>
         <span min-w-30>
-          <span pr-2 text-neutral-400>Speed</span>
-          <span font-mono>{{ speed.toFixed(0) }}ms</span>
+          <span pr-2 text-neutral-400>Ideal FPS</span>
+          <span font-mono>{{ throttledFps.toFixed(0) }}hz</span>
         </span>
         <InputSlide
-          v-model="speed"
-          :min="30"
-          :max="500"
+          v-model="throttledFps"
+          :min="1"
+          :max="120"
           smooth
           w-full flex-1
         />
@@ -72,7 +73,7 @@ async function onFileChange(file?: File) {
     </div>
     <div v-if="readPhase === ReadPhase.Ready && data" h-full w-full flex justify-center>
       <Generate
-        :speed="speed"
+        :max-scans-per-second="throttledFps"
         :data="data"
         :filename="filename"
         :content-type="contentType"

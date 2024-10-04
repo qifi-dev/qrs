@@ -2,17 +2,13 @@
 import { binaryToBlock, createDecoder } from '~~/utils/lt-code'
 import { readFileHeaderMetaFromBuffer } from '~~/utils/lt-code/binary-meta'
 import { toUint8Array } from 'js-base64'
-import { scan } from 'qr-scanner-wechat'
+import QrScanner from 'qr-scanner'
 import { useBytesRate } from '~/composables/timeseries'
 
 const props = withDefaults(defineProps<{
-  speed?: number
-  width?: number
-  height?: number
+  maxScansPerSecond?: number
 }>(), {
-  speed: 34,
-  width: 1080,
-  height: 1080,
+  maxScansPerSecond: 30,
 })
 
 enum CameraSignalStatus {
@@ -65,8 +61,7 @@ watch(cameras, () => {
 
 // const results = defineModel<Set<string>>('results', { default: new Set() })
 
-let stream: MediaStream | undefined
-
+let qrScanner: QrScanner | undefined
 let timestamp = 0
 const fps = ref(0)
 function setFps() {
@@ -78,52 +73,75 @@ function setFps() {
 const error = ref<any>()
 const shutterCount = ref(0)
 const video = shallowRef<HTMLVideoElement>()
+const videoWidth = ref(0)
+const videoHeight = ref(0)
 
 onMounted(async () => {
-  watch([() => props.width, () => props.height, selectedCamera], () => {
-    disconnectCamera()
-    connectCamera()
-  }, { immediate: true })
-
-  useIntervalFn(
-    async () => {
+  watch(() => props.maxScansPerSecond, async (maxScansPerSecond) => {
+    if (qrScanner) {
+      qrScanner.destroy()
+      await new Promise(resolve => setTimeout(resolve, 1000))
+    }
+    qrScanner = new QrScanner(video.value!, async (result) => {
       try {
-        await scanFrame()
+        await scanFrame(result)
       }
       catch (e) {
         error.value = e
         console.error(e)
       }
-    },
-    () => props.speed,
-  )
+    }, {
+      maxScansPerSecond,
+      highlightCodeOutline: false,
+      highlightScanRegion: true,
+      calculateScanRegion: ({ videoHeight, videoWidth }) => {
+        const size = Math.min(videoWidth, videoHeight)
+        return {
+          x: size === videoWidth ? 0 : (videoWidth - size) / 2,
+          y: size === videoHeight ? 0 : (videoHeight - size) / 2,
+          width: size,
+          height: size,
+        }
+      },
+      preferredCamera: selectedCamera.value,
+      onDecodeError(e) {
+        if (e.toString() !== 'No QR code found')
+          error.value = e
+      },
+    })
+    selectedCamera.value && qrScanner.setCamera(selectedCamera.value)
+    qrScanner.setInversionMode('both')
+    qrScanner.start()
+    updateCameraStatus()
+  }, { immediate: true })
+  watch(selectedCamera, () => {
+    if (qrScanner && selectedCamera.value) {
+      qrScanner.setCamera(selectedCamera.value)
+      qrScanner.start()
+    }
+  })
+  useIntervalFn(() => {
+    updateCameraStatus()
+  }, 1000)
 })
+onUnmounted(() => qrScanner && qrScanner.destroy())
 
-function disconnectCamera() {
-  stream?.getTracks().forEach(track => track.stop())
-  stream = undefined
-}
-
-async function connectCamera() {
+async function updateCameraStatus() {
   try {
     if (!(navigator && 'mediaDevices' in navigator && 'getUserMedia' in navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function')) {
       cameraSignalStatus.value = CameraSignalStatus.NotSupported
       return
     }
 
-    cameraSignalStatus.value = CameraSignalStatus.Waiting
+    videoHeight.value = video.value!.videoHeight
+    videoWidth.value = video.value!.videoWidth
 
-    stream = await navigator.mediaDevices.getUserMedia({
-      audio: false,
-      video: {
-        width: props.width,
-        height: props.height,
-        deviceId: selectedCamera.value,
-      },
-    })
+    if (videoWidth.value === 0 || videoHeight.value === 0) {
+      cameraSignalStatus.value = CameraSignalStatus.Waiting
+      return
+    }
 
-    video.value!.srcObject = stream
-    video.value!.play()
+    cameraSignalStatus.value = CameraSignalStatus.Ready
   }
   catch (e) {
     console.error(e)
@@ -209,39 +227,24 @@ function toDataURL(data: Uint8Array | string | any, type: string): string {
   }
 }
 
-async function scanFrame() {
-  if (cameraSignalStatus.value === CameraSignalStatus.NotGranted
-    || cameraSignalStatus.value === CameraSignalStatus.NotSupported) {
-    return
-  }
-
+async function scanFrame(result: QrScanner.ScanResult) {
   shutterCount.value += 1
-  const canvas = document.createElement('canvas')
-  canvas.width = video.value!.videoWidth
-  canvas.height = video.value!.videoHeight
-  if (video.value!.videoWidth === 0 || video.value!.videoHeight === 0) {
-    cameraSignalStatus.value = CameraSignalStatus.Waiting
-    return
-  }
 
   cameraSignalStatus.value = CameraSignalStatus.Ready
-  const ctx = canvas.getContext('2d')!
-  ctx.drawImage(video.value!, 0, 0, canvas.width, canvas.height)
 
-  const result = await scan(canvas)
-  if (!result.text)
+  if (!result.data)
     return
 
-  setFps()
-  bytesReceived.value += result.text.length
+  bytesReceived.value += result.data.length
   totalValidBytesReceived.value = decoder.value.encodedCount * (decoder.value.meta?.data.length ?? 0)
 
   // Do not process the same QR code twice
-  if (cached.has(result.text))
+  if (cached.has(result.data))
     return
+  setFps()
 
   error.value = undefined
-  const binary = toUint8Array(result.text)
+  const binary = toUint8Array(result.data)
   const data = binaryToBlock(binary)
   // Data set changed, reset decoder
   if (checksum.value !== data.checksum) {
@@ -258,7 +261,7 @@ async function scanFrame() {
     return
   }
 
-  cached.add(result.text)
+  cached.add(result.data)
   k.value = data.k
 
   data.indices.map(i => pluse(i))
@@ -385,11 +388,11 @@ function now() {
       />
     </div>
 
-    <div relative h-full max-h-150 max-w-150 w-full text="10px md:sm">
+    <div relative max-w-150 w-full text="10px md:sm">
       <video
         ref="video"
-        autoplay muted playsinline :controls="false"
-        aspect-square h-full w-full rounded-lg
+        :controls="false"
+        autoplay muted playsinline h-full w-full rounded-lg
       />
 
       <div absolute left-1 top-1 border="~ gray:50 rounded-md" bg-black:75 px2 py1 text-white font-mono shadow>
