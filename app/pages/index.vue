@@ -47,47 +47,53 @@ async function onFileChange(file?: File) {
 </script>
 
 <template>
-  <div px="4" flex="~ col" w-full gap-6 py-2>
-    <div flex="~ col sm:row" gap="6 sm:2">
-      <InputFile @file="onFileChange">
-        <div flex px-4 py-2 text="neutral-600 dark:neutral-400">
-          <div i-carbon:document-add text-lg />
-          <p font-semi-bold pl-2 text-nowrap>
-            <span>Change File</span>
-          </p>
+  <div class="mx-auto flex flex-col gap-8 px-4 py-8 container">
+    <div class="rounded-lg bg-white p-6 shadow-md dark:bg-gray-800">
+      <div class="flex flex-col gap-6 sm:flex-row sm:gap-4">
+        <InputFile class="w-full sm:w-auto" @file="onFileChange">
+          <div class="flex items-center px-4 py-2 text-gray-700 dark:text-gray-300">
+            <div i-carbon:document-add class="mr-2 text-lg" />
+            <p class="whitespace-nowrap font-semibold">
+              Change File
+            </p>
+          </div>
+        </InputFile>
+        <div class="w-full flex flex-row items-center">
+          <span class="mr-4 min-w-[120px]">
+            <span class="text-gray-600 dark:text-gray-400">Ideal FPS</span>
+            <span class="ml-2 text-gray-800 font-mono dark:text-gray-200">{{ throttledFps.toFixed(0) }}hz</span>
+          </span>
+          <InputSlide
+            v-model="throttledFps"
+            :min="1"
+            :max="120"
+            smooth
+            class="flex-1"
+          />
         </div>
-      </InputFile>
-      <div w-full inline-flex flex-row items-center>
-        <span min-w-30>
-          <span pr-2 text-neutral-400>Ideal FPS</span>
-          <span font-mono>{{ throttledFps.toFixed(0) }}hz</span>
-        </span>
-        <InputSlide
-          v-model="throttledFps"
-          :min="1"
-          :max="120"
-          smooth
-          w-full flex-1
-        />
       </div>
     </div>
-    <div v-if="readPhase === ReadPhase.Ready && data" h-full w-full flex justify-center>
+    <div v-if="readPhase === ReadPhase.Ready && data" class="w-full flex justify-center rounded-lg bg-white p-6 shadow-md dark:bg-gray-800">
       <Generate
         :max-scans-per-second="throttledFps"
         :data="data"
         :filename="filename"
         :content-type="contentType"
-        min-h="[calc(100vh-250px)]"
-        max-w="[calc(100vh-250px)]"
-        h-full w-full
+        class="h-[calc(100vh-350px)] max-w-[calc(100vh-350px)] w-full"
       />
     </div>
     <InputFile
       v-else
-      min-h="[calc(100vh-250px)]" h-full w-full
-      text="neutral-600 dark:neutral-400"
+      class="h-[calc(100vh-350px)] w-full flex items-center justify-center rounded-lg bg-white text-gray-600 shadow-md dark:bg-gray-800 dark:text-gray-400"
       @file="onFileChange"
-    />
+    >
+      <div class="text-center">
+        <div i-carbon:cloud-upload class="mb-4 text-6xl" />
+        <p class="text-lg font-semibold">
+          Drop a file here or click to select
+        </p>
+      </div>
+    </InputFile>
     <DropZone text="Drop File Here" @file="onFileChange" />
   </div>
 </template>
