@@ -181,7 +181,7 @@ function getStatus() {
     if (decoder.value.decodedData[i] != null)
       array[i] = 1
   }
-  for (const block of decoder.value.encodedBlocks) {
+  for (const block of decoder.value.encodedBlocks.values()) {
     for (const i of block.indices) {
       if (array[i] === 0 || array[i]! > block.indices.length) {
         array[i] = block.indices.length
@@ -429,13 +429,15 @@ function now() {
       </p>
     </div>
 
-    <div flex="~ gap-1 wrap" max-w-150 text-xs>
-      <div v-for="i, idx of decoder.encodedBlocks" :key="idx" border="~ gray/10 rounded" p1>
-        <template v-for="x, idy of i.indices" :key="x">
-          <span v-if="idy !== 0" op25>, </span>
-          <span :style="{ color: `hsl(${x * 40}, 40%, 60%)` }">{{ x }}</span>
-        </template>
+    <Collapsable label="Blocks">
+      <div flex="~ gap-1 wrap" max-w-150 text-xs>
+        <div v-for="i, idx of decoder.encodedBlocks.values()" :key="idx" border="~ gray/10 rounded" p1>
+          <template v-for="x, idy of i.indices" :key="x">
+            <span v-if="idy !== 0" op25>, </span>
+            <span :style="{ color: `hsl(${x * 40}, 40%, 60%)` }">{{ x }}</span>
+          </template>
+        </div>
       </div>
-    </div>
+    </Collapsable>
   </div>
 </template>
