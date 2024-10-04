@@ -92,15 +92,6 @@ export function xorUint8Array(a: Uint8Array, b: Uint8Array): Uint8Array {
   return result
 }
 
-export function stringToUint8Array(str: string): Uint8Array {
-  const data = new Uint8Array(str.length)
-  for (let i = 0; i < str.length; i++) {
-    data[i] = str.charCodeAt(i)
-  }
-
-  return data
-}
-
 /**
  * Convert Content-Type string to @see ContentType enum.
  *
