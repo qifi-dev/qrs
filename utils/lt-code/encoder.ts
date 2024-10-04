@@ -1,5 +1,5 @@
 import type { EncodedBlock } from './shared'
-import { deflate, inflate } from 'pako'
+import { deflate } from 'pako'
 import { getChecksum } from './checksum'
 
 export function createEncoder(data: Uint8Array, indicesSize: number, compress = true): LtEncoder {
