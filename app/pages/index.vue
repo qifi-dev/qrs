@@ -87,7 +87,7 @@ async function onFileChange(file?: File) {
       class="h-[calc(100vh-350px)] w-full flex items-center justify-center rounded-lg bg-white text-gray-600 shadow-md dark:bg-gray-800 dark:text-gray-400"
       @file="onFileChange"
     >
-      <div class="text-center">
+      <div class="flex flex-col items-center justify-center text-center">
         <div i-carbon:cloud-upload class="mb-4 text-6xl" />
         <p class="text-lg font-semibold">
           {{ $t('index.dropFile') }}
