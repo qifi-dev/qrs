@@ -15,9 +15,9 @@ Stream data through multiple QRCodes
 <img alt="Install Windows using QR Codes" src="public/install-windows-using-a-qr-code.jpeg" width="250px">
 </blockquote>
 
-## Usage
+## Try it
 
-Website: https://qrss.netlify.app/
+[Live demo](https://qrss.netlify.app/)
 
 ## Knowledge
 
