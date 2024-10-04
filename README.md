@@ -1,8 +1,19 @@
-# Qrs
+<br>
 
-Stream data through multiple QRCodes, a bit like this meme:
+<p align="center">
+  <img height="150px" src="public/logo.svg">
+</p>
 
+<h1 align="center">Qrs</h1>
+
+<p align="center">
+Stream data through multiple QRCodes
+</p>
+
+<blockquote align="center">
+<p>a bit like this meme:</p>
 <img alt="Install Windows using QR Codes" src="public/install-windows-using-a-qr-code.jpeg" width="250px">
+</blockquote>
 
 ## Usage
 
