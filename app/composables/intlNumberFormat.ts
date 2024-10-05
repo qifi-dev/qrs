@@ -1,3 +1,5 @@
+import type { ComputedRef, MaybeRef } from 'vue'
+
 export function useNumberFormat(
   value: MaybeRef<number | string> | ComputedRef<number | string>,
   options?: {
