@@ -65,7 +65,7 @@ async function onFileChange(file?: File) {
         <InputSlide
           v-model="throttledFps"
           :min="1"
-          :max="120"
+          :max="60"
           smooth
           w-full flex-1
         />
