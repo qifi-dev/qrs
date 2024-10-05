@@ -50,7 +50,7 @@ async function onFileChange(file?: File) {
   <div px="4" flex="~ col" w-full gap-6 py-2>
     <div flex="~ col sm:row" gap="6 sm:2">
       <InputFile @file="onFileChange">
-        <div flex px-4 py-2 text="neutral-600 dark:neutral-400">
+        <div text="neutral-600 dark:neutral-400" min-w-46 flex justify-center px-4 py-2>
           <div i-carbon:document-add text-lg />
           <p font-semi-bold pl-2 text-nowrap>
             <span>Change File</span>
@@ -77,8 +77,6 @@ async function onFileChange(file?: File) {
         :data="data"
         :filename="filename"
         :content-type="contentType"
-        min-h="[calc(100vh-250px)]"
-        max-w="[calc(100vh-250px)]"
         h-full w-full
       />
     </div>

@@ -312,6 +312,8 @@ function now() {
 
 <template>
   <div items-left flex flex-col gap4>
+    <pre v-if="error" overflow-x-auto text-red v-text="error" />
+
     <div w-full flex flex-wrap gap-2>
       <button
         v-for="item of cameras" :key="item.deviceId" :class="{
@@ -325,30 +327,28 @@ function now() {
       </button>
     </div>
 
-    <pre v-if="error" overflow-x-auto text-red v-text="error" />
-
     <Collapsable>
-      <div grid-cols="[150px_1fr]" grid gap-x-4 gap-y-2 overflow-x-auto whitespace-nowrap p2 text-sm font="mono!" :class="endTime ? 'text-green-500' : ''">
+      <div grid-cols="[150px_1fr]" font="mono!" :class="endTime ? 'text-green-500' : ''" grid gap-x-4 gap-y-2 overflow-x-auto whitespace-nowrap p2 text-sm>
         <span text-neutral-500>Filename</span>
-        <span text-right sm:text-left>{{ filename || '<unknown>' }}</span>
+        <span text-right md:text-left>{{ filename || '<unknown>' }}</span>
         <span text-neutral-500>Content-Type</span>
-        <span text-right sm:text-left>{{ contentType || '<unknown>' }}</span>
+        <span text-right md:text-left>{{ contentType || '<unknown>' }}</span>
         <span text-neutral-500>Checksum</span>
-        <span text-right sm:text-left>{{ checksum }}</span>
+        <span text-right md:text-left>{{ checksum }}</span>
         <span text-neutral-500>Indices</span>
-        <span text-right sm:text-left>{{ k }}</span>
+        <span text-right md:text-left>{{ k }}</span>
         <span text-neutral-500>Decoded</span>
-        <span text-right sm:text-left>{{ decodedBlocks }}</span>
+        <span text-right md:text-left>{{ decodedBlocks }}</span>
         <span text-neutral-500>Received blocks</span>
-        <span text-right sm:text-left>{{ decoder.encodedCount }}</span>
+        <span text-right md:text-left>{{ decoder.encodedCount }}</span>
         <span text-neutral-500>Expected bytes</span>
-        <span text-right sm:text-left>{{ (bytes / 1024).toFixed(2) }} KB</span>
+        <span text-right md:text-left>{{ (bytes / 1024).toFixed(2) }} KB</span>
         <span text-neutral-500>Received bytes</span>
-        <span text-right sm:text-left>{{ (receivedBytes / 1024).toFixed(2) }} KB ({{ bytes === 0 ? 0 : (receivedBytes / bytes * 100).toFixed(2) }}%)</span>
+        <span text-right md:text-left>{{ (receivedBytes / 1024).toFixed(2) }} KB ({{ bytes === 0 ? 0 : (receivedBytes / bytes * 100).toFixed(2) }}%)</span>
         <span text-neutral-500>Time elapsed</span>
-        <span text-right sm:text-left>{{ k === 0 ? 0 : (((endTime || now()) - startTime) / 1000).toFixed(2) }}s</span>
+        <span text-right md:text-left>{{ k === 0 ? 0 : (((endTime || now()) - startTime) / 1000).toFixed(2) }}s</span>
         <span text-neutral-500>Average bitrate</span>
-        <span text-right sm:text-left>{{ (receivedBytes / 1024 / ((endTime || now()) - startTime) * 1000).toFixed(2) }} Kbps</span>
+        <span text-right md:text-left>{{ (receivedBytes / 1024 / ((endTime || now()) - startTime) * 1000).toFixed(2) }} Kbps</span>
       </div>
     </Collapsable>
 

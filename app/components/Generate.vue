@@ -39,21 +39,35 @@ onMounted(() => {
 </script>
 
 <template>
-  <div flex flex-col items-center pb-20>
-    <p mb-4 w-full of-x-auto ws-nowrap font-mono>
-      Indices: {{ block?.indices }}<br>
-      Total: {{ block?.k }}<br>
-      Bytes: {{ ((block?.bytes || 0) / 1024).toFixed(2) }} KB<br>
-      Bitrate: {{ ((block?.bytes || 0) / 1024 * framePerSecond).toFixed(2) }} Kbps<br>
-      Frame Count: {{ count }}<br>
-      FPS: {{ framePerSecond.toFixed(2) }}
-    </p>
-    <div class="relative h-full w-full">
-      <div
-        class="aspect-square [&>svg]:h-full [&>svg]:w-full"
-        h-full w-full
-        v-html="svg"
-      />
+  <div w-full flex flex-col items-center gap-4>
+    <Collapsable w-full>
+      <div grid-cols="[150px_1fr]" font="mono!" grid w-full gap-x-4 gap-y-2 overflow-x-auto whitespace-nowrap p2 text-sm>
+        <span text-neutral-500>Indices</span>
+        <span text-right md:text-left>{{ block?.indices }}</span>
+        <span text-neutral-500>Total</span>
+        <span text-right md:text-left>{{ block?.k }}</span>
+        <span text-neutral-500>Bytes</span>
+        <span text-right md:text-left>{{ ((block?.bytes || 0) / 1024).toFixed(2) }} KB</span>
+        <span text-neutral-500>Bitrate</span>
+        <span text-right md:text-left>{{ ((block?.bytes || 0) / 1024 * framePerSecond).toFixed(2) }} Kbps</span>
+        <span text-neutral-500>Frame Count</span>
+        <span text-right md:text-left>{{ count }}</span>
+        <span text-neutral-500>FPS</span>
+        <span text-right md:text-left>{{ framePerSecond.toFixed(2) }}</span>
+      </div>
+    </Collapsable>
+    <div
+      w-full flex flex-col items-center pb-6
+      max-h="[calc(100vh-250px)]"
+      max-w="[calc(100vh-250px)]"
+    >
+      <div class="relative h-full w-full">
+        <div
+          class="aspect-square [&>svg]:h-full [&>svg]:w-full"
+          h-full w-full overflow-hidden rounded-lg
+          v-html="svg"
+        />
+      </div>
     </div>
   </div>
 </template>

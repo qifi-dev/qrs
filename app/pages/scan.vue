@@ -5,8 +5,7 @@ const throttledFps = useDebounce(fps, 500)
 </script>
 
 <template>
-  <div px-4 pt-4 space-y-10>
-    <Scan :max-scans-per-second="throttledFps" />
+  <div px-4 pt-4 space-y-4>
     <div w-full inline-flex flex-row items-center>
       <span min-w-40>
         <span pr-2 text-zinc-400>Ideal scans</span>
@@ -20,6 +19,7 @@ const throttledFps = useDebounce(fps, 500)
         w-full flex-1
       />
     </div>
+    <Scan :max-scans-per-second="throttledFps" />
     <!-- <h2 flex items-center gap-4 text-3xl>
       Results: {{ results.size }}
       <button class="flex items-center gap2 border rounded-md px2 py1 text-base shadow" @click="results = new Set()">
