@@ -12,7 +12,7 @@
           class="flex sm:hidden"
           left="50%" bottom="40px" translate-x="-50%"
           bg="neutral-100 dark:neutral-900"
-          absolute z-100
+          fixed z-100
           flex-1 justify-center gap-2
           rounded-full
           p-2
