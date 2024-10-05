@@ -11,6 +11,7 @@
     "prepare": "nuxi prepare",
     "start": "node .output/server/index.mjs",
     "start:generate": "npx serve .output/public",
+    "packages:build": "pnpm -F './packages/*' run build",
     "lint": "eslint .",
     "typecheck": "vue-tsc --noEmit",
     "test": "vitest"

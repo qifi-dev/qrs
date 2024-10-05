@@ -12,7 +12,9 @@ export default defineNuxtConfig({
     '@vite-pwa/nuxt',
     '@nuxt/eslint',
   ],
-
+  typescript: {
+    includeWorkspace: true,
+  },
   alias: {
     'luby-transform': fileURLToPath(new URL('./packages/luby-transform/src/index.ts', import.meta.url)),
   },

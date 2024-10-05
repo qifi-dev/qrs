@@ -7,6 +7,7 @@ words:
   - composables
   - luby
   - Nuxt
+  - pako
   - Soliton
   - timeseries
   - unocss
