@@ -5,24 +5,33 @@ const throttledFps = useDebounce(fps, 500)
 </script>
 
 <template>
-  <div class="mx-auto px-4 py-8 container space-y-8">
-    <div class="rounded-lg bg-white p-6 shadow-md dark:bg-gray-800">
-      <Scan :max-scans-per-second="throttledFps" />
+  <div px-4 pt-4 space-y-10>
+    <Scan :max-scans-per-second="throttledFps" />
+    <div w-full inline-flex flex-row items-center>
+      <span min-w-40>
+        <span pr-2 text-zinc-400>Ideal scans</span>
+        <span font-mono>{{ fps.toFixed(0) }}hz</span>
+      </span>
+      <InputSlide
+        v-model="fps"
+        :min="1"
+        :max="120"
+        smooth
+        w-full flex-1
+      />
     </div>
-    <div class="rounded-lg bg-white p-6 shadow-md dark:bg-gray-800">
-      <div class="max-w-xl w-full inline-flex flex-row items-center">
-        <span class="mr-4 min-w-[160px]">
-          <span class="text-gray-600 dark:text-gray-400">{{ $t('scan.idealScans') }}</span>
-          <span class="ml-2 text-gray-800 font-mono dark:text-gray-200">{{ fps.toFixed(0) }}hz</span>
-        </span>
-        <InputSlide
-          v-model="fps"
-          :min="1"
-          :max="120"
-          smooth
-          class="w-full flex-1"
-        />
+    <!-- <h2 flex items-center gap-4 text-3xl>
+      Results: {{ results.size }}
+      <button class="flex items-center gap2 border rounded-md px2 py1 text-base shadow" @click="results = new Set()">
+        <span i-carbon:clean inline-block />
+        Clear
+      </button>
+    </h2> -->
+    <!-- <div>
+      <div v-for="(item, index) of results" :key="index" font-mono>
+        ID:{{ index }}:<br>
+        {{ item }}
       </div>
-    </div>
+    </div> -->
   </div>
 </template>
