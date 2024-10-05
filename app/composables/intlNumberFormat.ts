@@ -34,3 +34,17 @@ export function useKiloBytesNumberFormat(
     unit: 'kilobyte',
   })
 }
+
+export function useKiloBytesPerSecondNumberFormat(
+  value: MaybeRef<number | string> | ComputedRef<number | string>,
+  options?: {
+    locales?: Intl.LocalesArgument
+  } & Intl.NumberFormatOptions,
+) {
+  return useNumberFormat(value, {
+    ...options,
+    style: 'unit',
+    unit: 'kilobyte-per-second',
+    unitDisplay: 'short',
+  })
+}

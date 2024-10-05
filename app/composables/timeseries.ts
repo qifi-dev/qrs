@@ -1,6 +1,8 @@
 import type { ComputedRef, Ref } from 'vue'
 import { computed, ref } from 'vue'
 
+import { useKiloBytesPerSecondNumberFormat } from './intlNumberFormat'
+
 interface TimeSeriesOptions {
   type: 'counter' | 'gauge'
   interval: number
@@ -126,16 +128,10 @@ export function useBytesRate(
     lastUpdateTime.value = now
   })
 
-  const kiloBytesFormatter = new Intl.NumberFormat('en-US', {
-    style: 'unit',
-    unit: 'kilobyte-per-second',
-    unitDisplay: 'short',
-  })
-
-  const formatted = computed(() => {
+  const formatted = useKiloBytesPerSecondNumberFormat(computed(() => {
     const kiloBytesPerSecond = bytesRate.value / 1024
-    return kiloBytesFormatter.format(Number.parseFloat(kiloBytesPerSecond.toFixed(2)))
-  })
+    return Number.parseFloat(kiloBytesPerSecond.toFixed(2))
+  }))
 
   return {
     bytesRate,
