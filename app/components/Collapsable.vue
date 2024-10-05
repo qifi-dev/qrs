@@ -14,7 +14,7 @@ watchEffect(() => {
 </script>
 
 <template>
-  <div flex="~ col" border="~ gray/25 rounded-lg" divide="y dashed gray/25" max-w-150 of-hidden shadow-sm>
+  <div flex="~ col" border="~ gray/25 rounded-lg" divide="y dashed gray/25" of-hidden shadow-sm>
     <button
       flex items-center justify-between px2 py1 text-sm
       @click="isVisible = !isVisible"
@@ -22,7 +22,8 @@ watchEffect(() => {
       <span>
         <slot name="label">
           {{ props.label ?? 'Inspect' }}
-        </slot></span> <span op50>{{ isVisible ? '▲' : '▼' }}</span>
+        </slot>
+      </span> <span op50>{{ isVisible ? '▲' : '▼' }}</span>
     </button>
     <div v-if="isVisible">
       <slot />

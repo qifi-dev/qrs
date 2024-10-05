@@ -7,7 +7,7 @@ const throttledFps = useDebounce(fps, 500)
 <template>
   <div px-4 pt-4 space-y-10>
     <Scan :max-scans-per-second="throttledFps" />
-    <div max-w-150 w-full inline-flex flex-row items-center>
+    <div w-full inline-flex flex-row items-center>
       <span min-w-40>
         <span pr-2 text-zinc-400>Ideal scans</span>
         <span font-mono>{{ fps.toFixed(0) }}hz</span>

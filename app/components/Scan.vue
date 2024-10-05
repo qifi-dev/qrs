@@ -1,22 +1,17 @@
 <script lang="ts" setup>
 import { binaryToBlock, createDecoder } from '~~/utils/lt-code'
 import { readFileHeaderMetaFromBuffer } from '~~/utils/lt-code/binary-meta'
+
 import { toUint8Array } from 'js-base64'
 import QrScanner from 'qr-scanner'
 import { useBytesRate } from '~/composables/timeseries'
+import { CameraSignalStatus } from '~/types'
 
 const props = withDefaults(defineProps<{
   maxScansPerSecond?: number
 }>(), {
   maxScansPerSecond: 30,
 })
-
-enum CameraSignalStatus {
-  NotGranted,
-  NotSupported,
-  Waiting,
-  Ready,
-}
 
 const bytesReceived = ref(0)
 const totalValidBytesReceived = ref(0)
@@ -77,7 +72,10 @@ const videoWidth = ref(0)
 const videoHeight = ref(0)
 
 onMounted(async () => {
-  watch(() => props.maxScansPerSecond, async (maxScansPerSecond) => {
+  watch([
+    () => props.maxScansPerSecond,
+    selectedCamera,
+  ], async ([maxScansPerSecond]) => {
     if (qrScanner) {
       qrScanner.destroy()
       await new Promise(resolve => setTimeout(resolve, 1000))
@@ -122,7 +120,7 @@ onMounted(async () => {
   })
   useIntervalFn(() => {
     updateCameraStatus()
-  }, 1000)
+  }, 250)
 })
 onUnmounted(() => qrScanner && qrScanner.destroy())
 
@@ -313,8 +311,8 @@ function now() {
 </script>
 
 <template>
-  <div items-left flex flex-col gap6>
-    <div max-w-150 w-full flex flex-wrap gap-2>
+  <div items-left flex flex-col gap4>
+    <div w-full flex flex-wrap gap-2>
       <button
         v-for="item of cameras" :key="item.deviceId" :class="{
           'text-blue': selectedCamera === item.deviceId,
@@ -330,22 +328,32 @@ function now() {
     <pre v-if="error" overflow-x-auto text-red v-text="error" />
 
     <Collapsable>
-      <p w-full of-x-auto ws-nowrap px2 py1 font-mono :class="endTime ? 'text-green' : ''">
-        <span>Filename: {{ filename }}</span><br>
-        <span>Content-Type: {{ contentType }}</span><br>
-        <span>Checksum: {{ checksum }}</span><br>
-        <span>Indices: {{ k }}</span><br>
-        <span>Decoded: {{ decodedBlocks }}</span><br>
-        <span>Received blocks: {{ decoder.encodedCount }}</span><br>
-        <span>Expected bytes: {{ (bytes / 1024).toFixed(2) }} KB</span><br>
-        <span>Received bytes: {{ (receivedBytes / 1024).toFixed(2) }} KB ({{ bytes === 0 ? 0 : (receivedBytes / bytes * 100).toFixed(2) }}%)</span><br>
-        <span>Time elapsed: {{ (((endTime || now()) - startTime) / 1000).toFixed(2) }} s</span><br>
-        <span>Average bitrate: {{ (receivedBytes / 1024 / ((endTime || now()) - startTime) * 1000).toFixed(2) }} Kbps</span><br>
-      </p>
+      <div grid-cols="[150px_1fr]" grid gap-x-4 gap-y-2 overflow-x-auto whitespace-nowrap p2 text-sm font="mono!" :class="endTime ? 'text-green-500' : ''">
+        <span text-neutral-500>Filename</span>
+        <span text-right sm:text-left>{{ filename || '<unknown>' }}</span>
+        <span text-neutral-500>Content-Type</span>
+        <span text-right sm:text-left>{{ contentType || '<unknown>' }}</span>
+        <span text-neutral-500>Checksum</span>
+        <span text-right sm:text-left>{{ checksum }}</span>
+        <span text-neutral-500>Indices</span>
+        <span text-right sm:text-left>{{ k }}</span>
+        <span text-neutral-500>Decoded</span>
+        <span text-right sm:text-left>{{ decodedBlocks }}</span>
+        <span text-neutral-500>Received blocks</span>
+        <span text-right sm:text-left>{{ decoder.encodedCount }}</span>
+        <span text-neutral-500>Expected bytes</span>
+        <span text-right sm:text-left>{{ (bytes / 1024).toFixed(2) }} KB</span>
+        <span text-neutral-500>Received bytes</span>
+        <span text-right sm:text-left>{{ (receivedBytes / 1024).toFixed(2) }} KB ({{ bytes === 0 ? 0 : (receivedBytes / bytes * 100).toFixed(2) }}%)</span>
+        <span text-neutral-500>Time elapsed</span>
+        <span text-right sm:text-left>{{ k === 0 ? 0 : (((endTime || now()) - startTime) / 1000).toFixed(2) }}s</span>
+        <span text-neutral-500>Average bitrate</span>
+        <span text-right sm:text-left>{{ (receivedBytes / 1024 / ((endTime || now()) - startTime) * 1000).toFixed(2) }} Kbps</span>
+      </div>
     </Collapsable>
 
     <Collapsable v-if="k" label="Packets" :default="true">
-      <div flex="~ col gap-2" max-w-150 p2>
+      <div flex="~ col gap-2" p2>
         <div flex="~ gap-0.4 wrap">
           <div
             v-for="x, idx of status"
@@ -365,9 +373,12 @@ function now() {
     </Collapsable>
 
     <Collapsable v-if="dataUrl" label="Download" :default="true">
-      <div flex="~ col gap-2" max-w-150 p2>
+      <div flex="~ col gap-2" p2>
         <img v-if="contentType?.startsWith('image/')" :src="dataUrl">
-        <p v-if="contentType?.startsWith('text/')" :src="dataUrl">
+        <video v-else-if="contentType?.startsWith('video/')" controls autoplay muted>
+          <source :src="dataUrl" :type="contentType">
+        </video>
+        <p v-else-if="contentType?.startsWith('text/')" :src="dataUrl">
           {{ textContent }}
         </p>
         <a
@@ -381,53 +392,28 @@ function now() {
     </Collapsable>
 
     <!-- This is a progress bar that is not accurate but feels comfortable. -->
-    <div v-if="k" relative h-4 max-w-150 rounded bg-black:75 text-white font-mono shadow>
+    <div v-if="k" relative h-4 rounded bg-black:75 text-white font-mono shadow>
       <div
         bg="green-400" border="~ green4 rounded" transition="all ease" absolute inset-y-0 h-full w-full duration-1000
         :style="{ maxWidth: `${decodedBlocks === k ? 100 : (Math.min(1, receivedBytes / bytes * 0.66) * 100).toFixed(2)}%` }"
       />
     </div>
 
-    <div relative max-w-150 w-full text="10px md:sm">
+    <Camera
+      :k="k"
+      :fps="fps"
+      :bytes="bytes"
+      :received-bytes="receivedBytes"
+      :current-bytes="currentBytesFormatted"
+      :current-valid-bytes-speed="currentValidBytesSpeedFormatted"
+      :camera-signal-status="cameraSignalStatus"
+    >
       <video
         ref="video"
         :controls="false"
         autoplay muted playsinline h-full w-full rounded-lg
       />
-
-      <div absolute left-1 top-1 border="~ gray:50 rounded-md" bg-black:75 px2 py1 text-white font-mono shadow>
-        <template v-if="k">
-          <span>{{ (receivedBytes / 1024).toFixed(2) }} / {{ (bytes / 1024).toFixed(2) }} KB <span text-neutral-400>({{ (receivedBytes / bytes * 100).toFixed(2) }}%)</span></span>
-        </template>
-        <template v-else>
-          No Data
-        </template>
-      </div>
-      <div
-        v-if="cameraSignalStatus === CameraSignalStatus.Waiting"
-        top="50%" left="50%" translate-x="[-50%]" text="neutral-500" absolute flex flex-col items-center gap-2 font-mono
-      >
-        <div i-carbon:circle-dash animate-spin animate-duration-5000 text-3xl />
-        <p>No Signal</p>
-      </div>
-      <div
-        v-else-if="cameraSignalStatus === CameraSignalStatus.NotGranted"
-        top="50%" left="50%" translate-x="[-50%]" text="neutral-500" absolute flex flex-col items-center gap-2 font-mono
-      >
-        <div i-carbon:error-outline text-3xl />
-        <p>Not Granted</p>
-      </div>
-      <div
-        v-else-if="cameraSignalStatus === CameraSignalStatus.NotSupported"
-        top="50%" left="50%" translate-x="[-50%]" text="neutral-500" absolute flex flex-col items-center gap-2 font-mono
-      >
-        <div i-carbon:circle-dash text-3xl />
-        <p>Not Supported</p>
-      </div>
-      <p absolute right-1 top-1 border="~ gray:50 rounded-md" bg-black:75 px2 py1 text-white font-mono shadow>
-        {{ fps.toFixed(0) }} hz | {{ currentValidBytesSpeedFormatted }} <span text-neutral-400>({{ currentBytesFormatted }})</span>
-      </p>
-    </div>
+    </Camera>
 
     <Collapsable label="Blocks">
       <div flex="~ gap-1 wrap" max-w-150 text-xs>
