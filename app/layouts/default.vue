@@ -16,12 +16,13 @@
           <span i-carbon-download inline-block />
           Receive
         </NuxtLink>
-
-        <a href="https://github.com/qqrss/qrs" target="_blank" op70 hover="text-blue" duration-300 transition="all ease-in-out" flex="~ items-center gap-1">
-          <span i-carbon:logo-github inline-block /><span>GitHub</span>
-        </a>
       </div>
     </div>
     <slot />
+    <div flex flex-col items-center px-4 py-2>
+      <a href="https://github.com/qqrss/qrs" target="_blank" op70 hover="text-blue" duration-300 transition="all ease-in-out" flex="~ items-center gap-1">
+        <span i-carbon:logo-github inline-block /><span>GitHub</span>
+      </a>
+    </div>
   </main>
 </template>

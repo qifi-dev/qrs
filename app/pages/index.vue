@@ -82,7 +82,7 @@ async function onFileChange(file?: File) {
     </div>
     <InputFile
       v-else
-      min-h="[calc(100vh-250px)]" h-full w-full
+      min-h="[calc(100vh-290px)] sm:[calc(100vh-240px)]" h-full w-full
       text="neutral-600 dark:neutral-400"
       @file="onFileChange"
     />
