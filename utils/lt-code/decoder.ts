@@ -1,3 +1,4 @@
+/* eslint-disable no-cond-assign */
 import type { EncodedBlock } from './shared'
 import { inflate } from 'pako'
 import { getChecksum } from './checksum'
@@ -12,6 +13,10 @@ export class LtDecoder {
   public decodedCount = 0
   public encodedCount = 0
   public encodedBlocks: Set<EncodedBlock> = new Set()
+  public encodedBlockKeyMap: Map<string, EncodedBlock> = new Map()
+  public encodedBlockSubkeyMap: Map<string, Set<EncodedBlock>> = new Map()
+  public encodedBlockIndexMap: Map<number, Set<EncodedBlock>> = new Map()
+  public disposedEncodedBlocks: Map<number, (() => void)[]> = new Map()
   public meta: EncodedBlock = undefined!
 
   constructor(blocks?: EncodedBlock[]) {
@@ -32,65 +37,113 @@ export class LtDecoder {
     if (block.checksum !== this.meta.checksum) {
       throw new Error('Adding block with different checksum')
     }
-    this.encodedBlocks.add(block)
     this.encodedCount += 1
 
-    this.propagateDecoded()
+    block.indices = block.indices.sort((a, b) => a - b)
+    this.propagateDecoded(indicesToKey(block.indices), block)
 
     return this.decodedCount === this.meta.k
   }
 
-  propagateDecoded() {
-    let changed = false
-    for (const block of this.encodedBlocks) {
-      let { data, indices } = block
+  propagateDecoded(key: string, block: EncodedBlock) {
+    const { decodedData, encodedBlocks, encodedBlockIndexMap, encodedBlockKeyMap, encodedBlockSubkeyMap, disposedEncodedBlocks } = this
 
-      // We already have all the data from this block
-      if (indices.every(index => this.decodedData[index] != null)) {
-        this.encodedBlocks.delete(block)
-        continue
-      }
+    let index: number
+    let blocks: Set<EncodedBlock> | undefined
 
-      // XOR the data
+    let { data, indices } = block
+    const indicesSet = new Set(indices)
+
+    let subblock: EncodedBlock | undefined
+    let subIndicesSet: Set<number>
+
+    if (encodedBlockKeyMap.has(key) || indices.every(i => decodedData[i] != null)) {
+      return
+    }
+
+    // XOR the data
+    // Current block > degree 1, find decoded subset degree blocks to decode
+    if (indices.length > 1) {
       for (const index of indices) {
-        if (this.decodedData[index] != null) {
-          block.data = data = xorUint8Array(data, this.decodedData[index]!)
-          block.indices = indices = indices.filter(i => i !== index)
-          changed = true
+        if (decodedData[index] != null) {
+          block.data = data = xorUint8Array(data, decodedData[index]!)
+          indicesSet.delete(index)
         }
       }
-
-      if (indices.length === 1 && this.decodedData[indices[0]!] == null) {
-        this.decodedData[indices[0]!] = block.data
-        this.decodedCount++
-        this.encodedBlocks.delete(block)
-        changed = true
+      if (indicesSet.size !== indices.length) {
+        block.indices = indices = Array.from(indicesSet)
       }
     }
 
-    for (const block of this.encodedBlocks) {
-      const { data, indices } = block
-
-      // Use 1x2x3 XOR 2x3 to get 1
-      if (indices.length >= 3) {
-        const lowerBlocks = Array.from(this.encodedBlocks).filter(i => i.indices.length === indices.length - 1)
-        for (const lower of lowerBlocks) {
-          const extraIndices = indices.filter(i => !lower.indices.includes(i))
-          if (extraIndices.length === 1 && this.decodedData[extraIndices[0]!] == null) {
-            const extraData = xorUint8Array(data, lower.data)
-            const extraIndex = extraIndices[0]!
-            this.decodedData[extraIndex] = extraData
-            this.decodedCount++
-            this.encodedBlocks.delete(lower)
-            changed = true
+    // Use 1x2x3 XOR 2x3 to get 1
+    if (indices.length > 2) {
+      const subkeys: [index: number, subkey: string][] = []
+      for (const index of indices) {
+        const subkey = indicesToKey(indices.filter(i => i !== index))
+        if (subblock = encodedBlockKeyMap.get(subkey)) {
+          block.data = data = xorUint8Array(data, subblock.data)
+          subIndicesSet = new Set(subblock.indices)
+          for (const i of subIndicesSet) {
+            indicesSet.delete(i)
           }
+          block.indices = indices = Array.from(indicesSet)
+          break
+        }
+        else {
+          subkeys.push([index, subkey])
+        }
+      }
+
+      // If we can't find a subblock, store the subkeys for future decoding
+      if (indicesSet.size > 1) {
+        subkeys.forEach(([index, subkey]) => {
+          const dispose = () => encodedBlockSubkeyMap.get(subkey)?.delete(block)
+          encodedBlockSubkeyMap.get(subkey)?.add(block) ?? encodedBlockSubkeyMap.set(subkey, new Set([block]))
+          disposedEncodedBlocks.get(index)?.push(dispose) ?? disposedEncodedBlocks.set(index, [dispose])
+        })
+      }
+    }
+
+    // After decoding, if the block > degree 1, store it as a pending block awaiting decoding
+    if (indices.length > 1) {
+      block.indices.forEach((i) => {
+        encodedBlocks.add(block)
+        encodedBlockIndexMap.get(i)?.add(block) ?? encodedBlockIndexMap.set(i, new Set([block]))
+      })
+
+      encodedBlockKeyMap.set(key = indicesToKey(indices), block)
+
+      // Use 1x2 XOR 1x2x3 to get 3
+      const superset = encodedBlockSubkeyMap.get(key)
+      if (superset) {
+        encodedBlockSubkeyMap.delete(key)
+        for (const superblock of superset) {
+          const superIndicesSet = new Set(superblock.indices)
+          superblock.data = xorUint8Array(superblock.data, data)
+          for (const i of indices) {
+            superIndicesSet.delete(i)
+          }
+          superblock.indices = Array.from(superIndicesSet)
+          this.propagateDecoded(indicesToKey(superblock.indices), superblock)
         }
       }
     }
 
-    // If making some progress, continue
-    if (changed) {
-      this.propagateDecoded()
+    // After decoding, if the block is a degree 1 block, store it in decoded data and find blocks that can be decoded
+    else if (decodedData[index = indices[0]!] == null) {
+      encodedBlocks.delete(block)
+      disposedEncodedBlocks.get(index)?.forEach(dispose => dispose())
+      decodedData[index] = block.data
+      this.decodedCount += 1
+
+      if (blocks = encodedBlockIndexMap.get(index)) {
+        encodedBlockIndexMap.delete(index)
+        for (const block of blocks) {
+          key = indicesToKey(block.indices)
+          encodedBlockKeyMap.delete(key)
+          this.propagateDecoded(key, block)
+        }
+      }
     }
   }
 
@@ -134,4 +187,8 @@ export class LtDecoder {
 
     throw new Error('Checksum mismatch')
   }
+}
+
+function indicesToKey(indices: number[]) {
+  return indices.join(',')
 }

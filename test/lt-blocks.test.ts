@@ -30,8 +30,22 @@ it('cross-blocks resolving 1', () => {
   expect(data).toEqual(buffer)
 })
 
+it('cross-blocks resolving 2', () => {
+  const { buffer, encoder } = createEncoderWithIndices(3)
+
+  const decoder = createDecoder()
+  decoder.addBlock(encoder.createBlock([1, 2]))
+  decoder.addBlock(encoder.createBlock([0, 1, 2]))
+  // Here we know [0]
+  decoder.addBlock(encoder.createBlock([0, 2]))
+
+  const data = decoder.getDecoded()
+  expect(data).toBeDefined()
+  expect(data).toEqual(buffer)
+})
+
 // TODO: get it work
-it.skip('cross-blocks resolving 2', () => {
+it.skip('cross-blocks resolving 3', () => {
   const { buffer, encoder } = createEncoderWithIndices(5)
 
   const decoder = createDecoder()
