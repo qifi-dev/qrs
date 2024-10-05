@@ -37,19 +37,15 @@ export class LtDecoder {
     if (block.checksum !== this.meta.checksum) {
       throw new Error('Adding block with different checksum')
     }
+    this.encodedCount += 1
+
     block.indices = block.indices.sort((a, b) => a - b)
     this.propagateDecoded(indicesToKey(block.indices), block)
 
     return this.decodedCount === this.meta.k
   }
 
-  private count = 0
-
   propagateDecoded(key: string, block: EncodedBlock) {
-    if (this.count > 100) {
-      throw new Error('Too many blocks, aborting')
-    }
-
     const { decodedData, encodedBlocks, encodedBlockIndexMap, encodedBlockKeyMap, encodedBlockSubkeyMap, disposedEncodedBlocks } = this
 
     let index: number
@@ -64,7 +60,6 @@ export class LtDecoder {
     if (encodedBlockKeyMap.has(key) || indices.every(i => decodedData[i] != null)) {
       return
     }
-    this.encodedCount += 1
 
     // XOR the data
     // Current block > degree 1, find decoded subset degree blocks to decode
@@ -142,7 +137,6 @@ export class LtDecoder {
       this.decodedCount += 1
 
       if (blocks = encodedBlockIndexMap.get(index)) {
-        this.count += 1
         encodedBlockIndexMap.delete(index)
         for (const block of blocks) {
           key = indicesToKey(block.indices)
