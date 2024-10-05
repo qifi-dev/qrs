@@ -66,7 +66,7 @@ onMounted(() => {
       <div relative w-full>
         <div
           class="aspect-square [&>svg]:h-full [&>svg]:w-full"
-          h-full w-full overflow-hidden rounded-lg
+          h-full w-full overflow-hidden rounded="~ sm:lg"
           v-html="svg"
         />
       </div>
