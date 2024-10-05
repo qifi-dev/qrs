@@ -73,7 +73,7 @@ async function onFileChange(file?: File) {
     </div>
     <div
       v-if="readPhase === ReadPhase.Ready && data"
-      h-full w-full flex justify-center
+      h-full w-full flex justify-center pb-8
     >
       <Generate
         :max-scans-per-second="throttledFps"

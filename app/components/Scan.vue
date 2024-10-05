@@ -257,6 +257,10 @@ async function scanFrame(result: QrScanner.ScanResult) {
     startTime.value = performance.now()
     endTime.value = 0
     cached.clear()
+    filename.value = undefined
+    contentType.value = undefined
+    textContent.value = undefined
+    dataUrl.value = undefined
   }
   // The previous data set is already decoded, skip for any new blocks
   else if (endTime.value) {
