@@ -319,7 +319,7 @@ function now() {
 </script>
 
 <template>
-  <div items-left flex flex-col gap4>
+  <div items-left flex flex-col gap-4>
     <pre v-if="error" overflow-x-auto text-red v-text="error" />
 
     <div w-full flex flex-wrap gap-2>

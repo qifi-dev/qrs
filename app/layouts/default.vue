@@ -1,5 +1,5 @@
 <template>
-  <div h-full w-full flex flex-col>
+  <div max-w="full sm:250" mx-auto h-full w-full flex flex-col>
     <header flex flex-col gap-4 px-4 pb-4 pt-4>
       <nav flex items-center>
         <div w-40 flex="~" items-center gap-2 text-4xl>
