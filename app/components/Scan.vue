@@ -4,6 +4,7 @@ import { readFileHeaderMetaFromBuffer } from '~~/utils/lt-code/binary-meta'
 
 import { toUint8Array } from 'js-base64'
 import QrScanner from 'qr-scanner'
+import { useKiloBytesNumberFormat } from '~/composables/intlNumberFormat'
 import { useBytesRate } from '~/composables/timeseries'
 import { CameraSignalStatus } from '~/types'
 
@@ -172,6 +173,9 @@ const receivedBytes = computed(() => decoder.value.encodedCount * (decoder.value
 const filename = ref<string | undefined>()
 const contentType = ref<string | undefined>()
 const textContent = ref<string | undefined>()
+
+const bytesFormatted = useKiloBytesNumberFormat(computed(() => (bytes.value / 1024).toFixed(2)))
+const receivedBytesFormatted = useKiloBytesNumberFormat(computed(() => (receivedBytes.value / 1024).toFixed(2)))
 
 function getStatus() {
   const array = Array.from({ length: k.value }, () => 0)
@@ -342,9 +346,9 @@ function now() {
         <span text-neutral-500>Received blocks</span>
         <span text-right md:text-left>{{ decoder.encodedCount }}</span>
         <span text-neutral-500>Expected bytes</span>
-        <span text-right md:text-left>{{ (bytes / 1024).toFixed(2) }} KB</span>
+        <span text-right md:text-left>{{ bytesFormatted }} KB</span>
         <span text-neutral-500>Received bytes</span>
-        <span text-right md:text-left>{{ (receivedBytes / 1024).toFixed(2) }} KB ({{ bytes === 0 ? 0 : (receivedBytes / bytes * 100).toFixed(2) }}%)</span>
+        <span text-right md:text-left>{{ receivedBytesFormatted }} KB ({{ bytes === 0 ? 0 : (receivedBytes / bytes * 100).toFixed(2) }}%)</span>
         <span text-neutral-500>Time elapsed</span>
         <span text-right md:text-left>{{ k === 0 ? 0 : (((endTime || now()) - startTime) / 1000).toFixed(2) }}s</span>
         <span text-neutral-500>Average bitrate</span>

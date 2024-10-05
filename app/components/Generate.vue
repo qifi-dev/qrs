@@ -3,6 +3,7 @@ import type { EncodedBlock } from '~~/utils/lt-code'
 import { blockToBinary, createEncoder } from '~~/utils/lt-code'
 import { fromUint8Array } from 'js-base64'
 import { renderSVG } from 'uqr'
+import { useKiloBytesNumberFormat } from '~/composables/intlNumberFormat'
 
 const props = withDefaults(defineProps<{
   data: Uint8Array
@@ -20,6 +21,7 @@ const block = shallowRef<EncodedBlock>()
 
 const renderTime = ref(0)
 const framePerSecond = computed(() => 1000 / renderTime.value)
+const bytes = useKiloBytesNumberFormat(computed(() => ((block.value?.bytes || 0) / 1024).toFixed(2)))
 
 onMounted(() => {
   let frame = performance.now()
@@ -47,7 +49,7 @@ onMounted(() => {
         <span text-neutral-500>Total</span>
         <span text-right md:text-left>{{ block?.k }}</span>
         <span text-neutral-500>Bytes</span>
-        <span text-right md:text-left>{{ ((block?.bytes || 0) / 1024).toFixed(2) }} KB</span>
+        <span text-right md:text-left>{{ bytes }}</span>
         <span text-neutral-500>Bitrate</span>
         <span text-right md:text-left>{{ ((block?.bytes || 0) / 1024 * framePerSecond).toFixed(2) }} Kbps</span>
         <span text-neutral-500>Frame Count</span>
