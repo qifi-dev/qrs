@@ -47,7 +47,7 @@ async function onFileChange(file?: File) {
 </script>
 
 <template>
-  <div px="4" flex="~ col" w-full gap-6 py-2>
+  <div px="4" flex="~ col" h-full w-full gap-4 py-2>
     <div flex="~ col sm:row" gap="6 sm:2">
       <InputFile @file="onFileChange">
         <div text="neutral-600 dark:neutral-400" min-w-46 flex justify-center px-4 py-2>
@@ -71,18 +71,21 @@ async function onFileChange(file?: File) {
         />
       </div>
     </div>
-    <div v-if="readPhase === ReadPhase.Ready && data" h-full w-full flex justify-center>
+    <div
+      v-if="readPhase === ReadPhase.Ready && data"
+      h-full w-full flex justify-center
+    >
       <Generate
         :max-scans-per-second="throttledFps"
         :data="data"
         :filename="filename"
         :content-type="contentType"
-        h-full w-full
+        w-full
       />
     </div>
     <InputFile
       v-else
-      min-h="[calc(100vh-290px)] sm:[calc(100vh-240px)]" h-full w-full
+      h-full w-full
       text="neutral-600 dark:neutral-400"
       @file="onFileChange"
     />

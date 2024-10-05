@@ -58,12 +58,8 @@ onMounted(() => {
         <span text-right md:text-left>{{ framePerSecond.toFixed(2) }}</span>
       </div>
     </Collapsable>
-    <div
-      w-full flex flex-col items-center pb-6
-      max-h="[calc(100vh-250px)]"
-      max-w="[calc(100vh-250px)]"
-    >
-      <div class="relative h-full w-full">
+    <div w-full flex flex-col items-center>
+      <div relative w-full>
         <div
           class="aspect-square [&>svg]:h-full [&>svg]:w-full"
           h-full w-full overflow-hidden rounded-lg

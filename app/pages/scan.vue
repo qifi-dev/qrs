@@ -5,7 +5,7 @@ const throttledFps = useDebounce(fps, 500)
 </script>
 
 <template>
-  <div px-4 pt-4 space-y-4 min-h="[calc(100vh-160px)]">
+  <div px-4 pt-4 space-y-4>
     <div w-full inline-flex flex-row items-center>
       <span min-w-40>
         <span pr-2 text-zinc-400>Ideal scans</span>
