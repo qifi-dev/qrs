@@ -1,7 +1,6 @@
 <script lang="ts" setup>
-import type { EncodedBlock } from '~~/utils/lt-code'
-import { blockToBinary, createEncoder } from '~~/utils/lt-code'
 import { fromUint8Array } from 'js-base64'
+import { blockToBinary, createEncoder, type EncodedBlock } from 'luby-transform'
 import { renderSVG } from 'uqr'
 import { useKiloBytesNumberFormat } from '~/composables/intlNumberFormat'
 

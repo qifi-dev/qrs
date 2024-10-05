@@ -1,8 +1,7 @@
 <script lang="ts" setup>
-import { binaryToBlock, createDecoder } from '~~/utils/lt-code'
-import { readFileHeaderMetaFromBuffer } from '~~/utils/lt-code/binary-meta'
-
 import { toUint8Array } from 'js-base64'
+import { binaryToBlock, createDecoder, readFileHeaderMetaFromBuffer } from 'luby-transform'
+
 import QrScanner from 'qr-scanner'
 import { useKiloBytesNumberFormat } from '~/composables/intlNumberFormat'
 import { useBytesRate } from '~/composables/timeseries'

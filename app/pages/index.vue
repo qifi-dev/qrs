@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { appendFileHeaderMetaToBuffer } from '~~/utils/lt-code/binary-meta'
+import { appendFileHeaderMetaToBuffer } from 'luby-transform'
 
 enum ReadPhase {
   Idle,

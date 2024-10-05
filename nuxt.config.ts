@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url'
 import { pwa } from './app/config/pwa'
 import { appDescription } from './app/constants/index'
 
@@ -11,6 +12,10 @@ export default defineNuxtConfig({
     '@vite-pwa/nuxt',
     '@nuxt/eslint',
   ],
+
+  alias: {
+    'luby-transform': fileURLToPath(new URL('./packages/luby-transform/src/index.ts', import.meta.url)),
+  },
 
   experimental: {
     // when using generate, payload js assets included in sw precache manifest

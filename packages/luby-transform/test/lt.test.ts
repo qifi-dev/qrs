@@ -3,7 +3,7 @@ import { join } from 'node:path'
 
 import { fromUint8Array, toUint8Array } from 'js-base64'
 import { expect, it } from 'vitest'
-import { binaryToBlock, blockToBinary, createDecoder, createEncoder } from '../utils/lt-code'
+import { binaryToBlock, blockToBinary, createDecoder, createEncoder } from '../src'
 
 const list: {
   name: string

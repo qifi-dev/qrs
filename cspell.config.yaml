@@ -5,6 +5,7 @@ dictionaries: []
 words:
   - Attributify
   - composables
+  - luby
   - Nuxt
   - Soliton
   - timeseries
