@@ -349,11 +349,11 @@ function now() {
         <span text-neutral-500>Received blocks</span>
         <span text-right md:text-left>{{ decoder.encodedCount }}</span>
         <span text-neutral-500>Expected bytes</span>
-        <span text-right md:text-left>{{ bytesFormatted }} KB</span>
+        <span text-right md:text-left>{{ bytesFormatted }}</span>
         <span text-neutral-500>Received bytes</span>
-        <span text-right md:text-left>{{ receivedBytesFormatted }} KB ({{ bytes === 0 ? 0 : (receivedBytes / bytes * 100).toFixed(2) }}%)</span>
+        <span text-right md:text-left>{{ receivedBytesFormatted }} ({{ bytes === 0 ? 0 : (receivedBytes / bytes * 100).toFixed(2) }}%)</span>
         <span text-neutral-500>Time elapsed</span>
-        <span text-right md:text-left>{{ k === 0 ? 0 : (((endTime || now()) - startTime) / 1000).toFixed(2) }}s</span>
+        <span text-right md:text-left>{{ k === 0 ? 0 : (((endTime || now()) - startTime) / 1000).toFixed(2) }} s</span>
         <span text-neutral-500>Average bitrate</span>
         <span text-right md:text-left>{{ (receivedBytes / 1024 / ((endTime || now()) - startTime) * 1000).toFixed(2) }} Kbps</span>
       </div>
