@@ -19,6 +19,10 @@ Stream data through multiple QRCodes
 
 [Live demo](https://qrss.netlify.app/)
 
+## Sub-packages
+
+- [luby-transform](./packages/luby-transform) - Luby Transform encoding and decoding
+
 ## Knowledge
 
 <!-- 这种流式播放二维码传输数据的情况。类似“二进制抹去通道（Binary Erasure Channel, BEC）”，这是一种通信模型。在这个模型中，发送方发送二进制数据（0或1），接收方有一定概率无法接收到某些数据位，这些位会被标记为“抹去”或“丢失”。换句话说，接收方知道哪些位丢失了，但不知道它们的具体值。这个模型用于研究和设计能够在数据丢失情况下仍能有效传输信息的编码技术。
