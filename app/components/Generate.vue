@@ -31,7 +31,7 @@ onMounted(() => {
     block.value = data
     const binary = blockToBinary(data)
     const str = fromUint8Array(binary)
-    svg.value = renderSVG(str, { border: 1 })
+    svg.value = renderSVG(str, { border: 5 })
     const now = performance.now()
     renderTime.value = now - frame
     frame = now
@@ -65,6 +65,7 @@ onMounted(() => {
       <div relative w-full>
         <div
           class="aspect-square [&>svg]:h-full [&>svg]:w-full"
+
           h-full w-full overflow-hidden rounded="~ sm:lg"
           v-html="svg"
         />
