@@ -1,0 +1,37 @@
+{
+  "name": "@qifi/generate",
+  "type": "module",
+  "version": "0.0.2",
+  "description": "Stream Generated QR Codes for data transmission",
+  "author": "Rizumu Ayaka <rizumu@ayaka.moe>",
+  "license": "MIT",
+  "homepage": "https://github.com/qifi-dev/qrs#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/qifi-dev/qrs.git",
+    "directory": "packages/generate"
+  },
+  "bug": "https://github.com/qifi-dev/qrs/issues",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "main": "./dist/index.mjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "unbuild",
+    "stub": "unbuild --stub"
+  },
+  "dependencies": {
+    "js-base64": "^3.7.7",
+    "luby-transform": "workspace:*",
+    "uqr": "^0.1.2"
+  }
+}
