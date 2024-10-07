@@ -25,7 +25,7 @@ const generaterANSI = createGeneraterANSI(new Uint8Array(file.buffer), {
 })
 
 // display QR Code in terminal
-for (const blockQRCode of generaterANSI) {
+for (const blockQRCode of generaterANSI()) {
   console.log(blockQRCode)
 }
 
