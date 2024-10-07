@@ -10,6 +10,7 @@ enum ReadPhase {
 
 const error = ref<any>()
 const fps = ref(20)
+const sliceSize = ref(1000)
 const throttledFps = useDebounce(fps, 500)
 const readPhase = ref<ReadPhase>(ReadPhase.Idle)
 
@@ -70,6 +71,19 @@ async function onFileChange(file?: File) {
           w-full flex-1
         />
       </div>
+      <div w-full inline-flex flex-row items-center>
+        <span min-w-30>
+          <span pr-2 text-neutral-400>Slice Size</span>
+        </span>
+        <input
+          v-model.lazy="sliceSize"
+          type="number"
+          :min="1"
+          :max="2000"
+          border="~ gray/25 rounded-lg"
+          w-full flex-1 bg-transparent px2 py1 text-sm shadow-sm
+        >
+      </div>
     </div>
     <div
       v-if="readPhase === ReadPhase.Ready && data"
@@ -77,6 +91,7 @@ async function onFileChange(file?: File) {
     >
       <Generate
         :max-scans-per-second="throttledFps"
+        :slice-size="sliceSize"
         :data="data"
         :filename="filename"
         :content-type="contentType"
@@ -85,8 +100,8 @@ async function onFileChange(file?: File) {
     </div>
     <InputFile
       v-else
-      h-full w-full
       text="neutral-600 dark:neutral-400"
+      aspect-1 h-full w-full rounded-lg
       @file="onFileChange"
     />
     <DropZone text="Drop File Here" @file="onFileChange" />

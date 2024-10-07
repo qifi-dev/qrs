@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { fromUint8Array } from 'js-base64'
-import { blockToBinary, createEncoder, type EncodedBlock } from 'luby-transform'
+import { blockToBinary, createEncoder, type EncodedBlock, type LtEncoder } from 'luby-transform'
 import { renderSVG } from 'uqr'
 import { useKiloBytesNumberFormat } from '~/composables/intlNumberFormat'
 
@@ -9,12 +9,17 @@ const props = withDefaults(defineProps<{
   filename?: string
   contentType?: string
   maxScansPerSecond: number
+  sliceSize: number
 }>(), {
   maxScansPerSecond: 20,
+  sliceSize: 1000,
 })
 
 const count = ref(0)
-const encoder = createEncoder(props.data, 1000)
+let encoder: LtEncoder
+watch(() => [props.data, props.sliceSize], () => {
+  encoder = createEncoder(props.data, props.sliceSize)
+}, { immediate: true })
 const svg = ref<string>()
 const block = shallowRef<EncodedBlock>()
 
