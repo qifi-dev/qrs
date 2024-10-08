@@ -88,6 +88,18 @@ importers:
         specifier: ^2.1.6
         version: 2.1.6(typescript@5.6.2)
 
+  packages/generate:
+    dependencies:
+      js-base64:
+        specifier: ^3.7.7
+        version: 3.7.7
+      luby-transform:
+        specifier: workspace:*
+        version: link:../luby-transform
+      uqr:
+        specifier: ^0.1.2
+        version: 0.1.2
+
   packages/luby-transform:
     dependencies:
       pako:
