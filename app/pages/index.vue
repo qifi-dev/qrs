@@ -58,7 +58,7 @@ async function onFileChange(file?: File) {
           </p>
         </div>
       </InputFile>
-      <div w-full inline-flex flex-row items-center>
+      <div w-full inline-flex flex-1 flex-row items-center>
         <span min-w-30>
           <span pr-2 text-neutral-400>Ideal FPS</span>
           <span font-mono>{{ throttledFps.toFixed(0) }}hz</span>
@@ -71,7 +71,7 @@ async function onFileChange(file?: File) {
           w-full flex-1
         />
       </div>
-      <div w-full inline-flex flex-row items-center>
+      <div w-full inline-flex flex-1 flex-row items-center>
         <span min-w-30>
           <span pr-2 text-neutral-400>Slice Size</span>
         </span>
