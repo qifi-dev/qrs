@@ -17,7 +17,7 @@ Stream data through multiple QRCodes
 
 <p align="center">
   <a href="https://github.com/sponsors/LittleSound">
-    <img src="https://raw.githubusercontent.com/LittleSound/sponsors/main/sponsors.svg"/>
+    <img src="https://cdn.jsdelivr.net/gh/littlesound/sponsors/sponsors.svg"/>
   </a>
 </p>
 
