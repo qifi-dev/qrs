@@ -34,6 +34,7 @@ Stream data through multiple QRCodes
 ## Sub-packages
 
 - [luby-transform](./packages/luby-transform) - Luby Transform encoding and decoding
+- [@qifi/generate](./packages/generate) - Stream Generated QR Codes for data transmission
 
 ## Knowledge
 
