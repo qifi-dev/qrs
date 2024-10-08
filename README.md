@@ -15,6 +15,18 @@ Stream data through multiple QRCodes
 <img alt="Install Windows using QR Codes" src="public/install-windows-using-a-qr-code.jpeg" width="250px">
 </blockquote>
 
+<p align="center">
+  <a href="https://github.com/sponsors/LittleSound">
+    <img src="https://raw.githubusercontent.com/LittleSound/sponsors/main/sponsors.svg"/>
+  </a>
+</p>
+
+<p align="center">
+  This project is made possible by all the sponsors supporting my work <br>
+  You can join them at my sponsors profile:
+</p>
+<p align="center"><a href="https://github.com/sponsors/LittleSound"><img src="https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=%23fe8e86&style=for-the-badge" /></a></p>
+
 ## Try it
 
 [Live demo](https://qrss.netlify.app/)
