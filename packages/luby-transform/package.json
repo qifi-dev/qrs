@@ -1,7 +1,7 @@
 {
   "name": "luby-transform",
   "type": "module",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Luby Transform Codes is a kind of fountain codes",
   "author": "Anthony Fu <anthonyfu117@hotmail.com>",
   "license": "MIT",

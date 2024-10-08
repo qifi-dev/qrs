@@ -1,7 +1,7 @@
 {
   "name": "@qifi/generate",
   "type": "module",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Stream Generated QR Codes for data transmission",
   "author": "Rizumu Ayaka <rizumu@ayaka.moe>",
   "license": "MIT",
