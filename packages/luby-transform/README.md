@@ -1,10 +1,37 @@
 # ⛲️ Luby Transform
 
+<!-- Some beautiful tags -->
+<p align="left">
+  <a href="https://www.npmjs.com/package/luby-transform">
+    <img alt="npm" src="https://badgen.net/npm/v/luby-transform">
+  </a>
+  <a href="#usage">
+    <img alt="docs" src="https://img.shields.io/badge/-docs%20%26%20demos-1e8a7a">
+  </a>
+  <a href="https://github.com/sponsors/LittleSound">
+    <img alt="docs" src="https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=%23fe8e86">
+  </a>
+</p>
+
 > While exploring streaming QR code data transmission in the [Qrs](https://github.com/qifi-dev/qrs) project, I developed this npm package to solve the packet loss issue.
 
 📡 [Luby Transform](https://en.wikipedia.org/wiki/Luby_transform_code) is used for data transmission in a "[Binary Erasure Channel (BEC).](https://en.wikipedia.org/wiki/Binary_erasure_channel)" BEC is a communication model where the sender transmits binary data (0 or 1), and the receiver has a certain probability of not receiving some data bits, which are marked as "erased" or "lost." In other words, the receiver knows which bits are lost but not their specific values. BEC is used to study and design coding techniques that can effectively transmit information even in the presence of data loss.
 
 🧪 Scientists have conducted in-depth research on how to efficiently transmit data in BEC, and one method is using 🛁 "[Fountain Codes](https://en.wikipedia.org/wiki/Fountain_code)". Fountain Codes are a type of error-correcting code that can effectively transmit information in the presence of data loss. Luby Transform coding is a type of Fountain Code. Its basic principle is to divide the original data into multiple small blocks and then generate an unlimited number of encoded blocks through encoding. 🚰 The receiver only needs to receive enough encoded blocks (usually slightly more than the original blocks) without needing to receive specific lost blocks to reconstruct the original data.
+
+## Sponsors
+
+<p align="center">
+  <a href="https://github.com/sponsors/LittleSound">
+    <img src="https://cdn.jsdelivr.net/gh/littlesound/sponsors/sponsors.svg"/>
+  </a>
+</p>
+
+<p align="center">
+  This project is made possible by all the sponsors supporting my work <br>
+  You can join them at my sponsors profile:
+</p>
+<p align="center"><a href="https://github.com/sponsors/LittleSound"><img src="https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=%23fe8e86&style=for-the-badge" /></a></p>
 
 ## Usage
 
