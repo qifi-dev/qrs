@@ -19,7 +19,7 @@ function onFileChange(e: Event) {
     text="hover:neutral-700 active:neutral-500 dark:hover:neutral-300 dark:active:neutral-400"
     flex="~"
     transition="all ease-in-out"
-    cursor-pointer items-center justify-center overflow-hidden rounded-md duration-300
+    cursor-pointer items-center justify-center overflow-hidden rounded-lg duration-300
   >
     <input
       type="file"

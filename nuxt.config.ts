@@ -19,6 +19,12 @@ export default defineNuxtConfig({
     'luby-transform': fileURLToPath(new URL('./packages/luby-transform/src/index.ts', import.meta.url)),
   },
 
+  runtimeConfig: {
+    public: {
+      qrcodePrefix: '',
+    },
+  },
+
   experimental: {
     // when using generate, payload js assets included in sw precache manifest
     // but missing on offline, disabling extraction it until fixed

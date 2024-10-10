@@ -10,9 +10,11 @@ const props = withDefaults(defineProps<{
   contentType?: string
   maxScansPerSecond: number
   sliceSize: number
+  prefix?: string
 }>(), {
   maxScansPerSecond: 20,
   sliceSize: 1000,
+  prefix: '',
 })
 
 const count = ref(0)
@@ -36,7 +38,7 @@ onMounted(() => {
     block.value = data
     const binary = blockToBinary(data)
     const str = fromUint8Array(binary)
-    svg.value = renderSVG(str, { border: 5 })
+    svg.value = renderSVG(props.prefix + str, { border: 5 })
     const now = performance.now()
     renderTime.value = now - frame
     frame = now

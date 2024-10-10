@@ -243,22 +243,27 @@ function toDataURL(data: Uint8Array | string | any, type: string): string {
 let decoderInitPromise: Promise<any> | undefined
 async function scanFrame(result: QrScanner.ScanResult) {
   cameraSignalStatus.value = CameraSignalStatus.Ready
+  let strData = result.data
 
-  if (!result.data)
+  if (!strData)
     return
 
-  bytesReceived.value += result.data.length
+  if (strData.startsWith('http')) {
+    strData = strData.slice(strData.indexOf('#') + 1)
+  }
+
+  bytesReceived.value += strData.length
   totalValidBytesReceived.value = decoderStatus.value.encodedCount * (decoderStatus.value.meta?.data.length ?? 0)
 
   // Do not process the same QR code twice
-  if (cached.has(result.data))
+  if (cached.has(strData))
     return
-  if (cached.size && result.data) {
+  if (cached.size && strData) {
     shutterCount.value += 1
   }
 
   error.value = undefined
-  const binary = toUint8Array(result.data)
+  const binary = toUint8Array(strData)
   const data = binaryToBlock(binary)
   // Data set changed, reset decoder
   if (checksum.value !== data.checksum) {
@@ -286,7 +291,7 @@ async function scanFrame(result: QrScanner.ScanResult) {
   }
   await decoderInitPromise
 
-  cached.add(result.data)
+  cached.add(strData)
   k.value = data.k
 
   data.indices.map(i => pluse(i))
