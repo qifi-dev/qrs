@@ -262,11 +262,17 @@ async function scanFrame(result: QrScanner.ScanResult) {
   const data = binaryToBlock(binary)
   // Data set changed, reset decoder
   if (checksum.value !== data.checksum) {
+    if (k.value && !dataUrl.value) {
+      // eslint-disable-next-line no-alert
+      if (!window.confirm('Scanned different files. You have unfinished transmission, are you sure to start a new one?')) {
+        return
+      }
+    }
     decoderInitPromise = decoderWorker.createDecoder()
     checksum.value = data.checksum
     bytes.value = data.bytes
     k.value = data.k
-    startTime.value = performance.now()
+    startTime.value = now()
     endTime.value = 0
     cached.clear()
     filename.value = undefined
@@ -288,7 +294,7 @@ async function scanFrame(result: QrScanner.ScanResult) {
   decoderStatus.value = await decoderWorker.getStatus()
   status.value = getStatus()
   if (success) {
-    endTime.value = performance.now()
+    endTime.value = now()
 
     const merged = (await decoderWorker.getDecoded())!
     const [mergedData, meta] = readFileHeaderMetaFromBuffer(merged)
@@ -326,6 +332,12 @@ async function scanFrame(result: QrScanner.ScanResult) {
   //   }
   // }
 }
+
+useUnsavedChange(() => {
+  if (k.value && !dataUrl.value) {
+    return 'You have unfinished transmission, are you sure to leave?'
+  }
+})
 
 function now() {
   return performance.now()
