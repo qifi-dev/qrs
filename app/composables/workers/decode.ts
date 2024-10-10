@@ -1,4 +1,4 @@
-import type { EncodedBlock, LtDecoder } from '~~/packages/luby-transform/dist'
+import type { EncodedBlock, LtDecoder } from 'luby-transform'
 import { createBirpc } from 'birpc'
 import { createDecoder } from 'luby-transform'
 
