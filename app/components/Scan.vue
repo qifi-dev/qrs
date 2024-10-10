@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { toUint8Array } from 'js-base64'
-import { binaryToBlock, createDecoder, readFileHeaderMetaFromBuffer } from 'luby-transform'
+import { binaryToBlock, readFileHeaderMetaFromBuffer } from 'luby-transform'
 import QrScanner from 'qr-scanner'
 
 import { createDecodeWorker } from '~/composables/decode-worker'
