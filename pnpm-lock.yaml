@@ -11,6 +11,9 @@ importers:
 
   .:
     dependencies:
+      birpc:
+        specifier: ^0.2.19
+        version: 0.2.19
       js-base64:
         specifier: ^3.7.7
         version: 3.7.7
@@ -2753,8 +2756,8 @@ packages:
   bindings@1.5.0:
     resolution: {integrity: sha512-p2q/t/mhvuOj/UeLlV6566GD/guowlr0hHxClI0W9m7MWYkL1F0hLo+0Aexs9HSPCtR1SXQ0TD3MMKrXZajbiQ==}
 
-  birpc@0.2.17:
-    resolution: {integrity: sha512-+hkTxhot+dWsLpp3gia5AkVHIsKlZybNT5gIYiDlNzJrmYPcTM9k5/w2uaj3IPpd7LlEYpmCj4Jj1nC41VhDFg==}
+  birpc@0.2.19:
+    resolution: {integrity: sha512-5WeXXAvTmitV1RqJFppT5QtUiz2p1mRSYU000Jkft5ZUCLJIk4uQriYNO50HknxKwM6jd8utNc66K1qGIwwWBQ==}
 
   boolbase@1.0.0:
     resolution: {integrity: sha512-JZOSA7Mo9sNGB8+UjSgzdLtokWAky1zbztM3WRLCbZ70/3cTANmQmOdR7y2g+J0e2WXywy1yS468tY+IruqEww==}
@@ -7904,7 +7907,7 @@ snapshots:
       '@nuxt/kit': 3.13.2(magicast@0.3.5)(rollup@3.29.5)(webpack-sources@3.2.3)
       '@vue/devtools-core': 7.4.4(vite@5.4.6(@types/node@22.5.0)(terser@5.31.6))(vue@3.5.6(typescript@5.6.2))
       '@vue/devtools-kit': 7.4.4
-      birpc: 0.2.17
+      birpc: 0.2.19
       consola: 3.2.3
       cronstrue: 2.50.0
       destr: 2.0.3
@@ -9149,7 +9152,7 @@ snapshots:
   '@vue/devtools-kit@7.4.4':
     dependencies:
       '@vue/devtools-shared': 7.4.5
-      birpc: 0.2.17
+      birpc: 0.2.19
       hookable: 5.5.3
       mitt: 3.0.1
       perfect-debounce: 1.0.0
@@ -9501,7 +9504,7 @@ snapshots:
     dependencies:
       file-uri-to-path: 1.0.0
 
-  birpc@0.2.17: {}
+  birpc@0.2.19: {}
 
   boolbase@1.0.0: {}
 
