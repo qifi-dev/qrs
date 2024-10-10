@@ -374,7 +374,11 @@ function now() {
       </div>
     </Collapsable>
 
-    <Collapsable v-if="k" label="Packets" :default="true">
+    <Collapsable v-if="k" :default="k < 500">
+      <template #label>
+        <span>Packets</span>
+        <span ml-2 text-neutral-400>({{ k }})</span>
+      </template>
       <div flex="~ col gap-2" p2>
         <div flex="~ gap-0.4 wrap">
           <div
