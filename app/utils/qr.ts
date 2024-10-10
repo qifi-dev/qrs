@@ -45,11 +45,11 @@ export function renderSVGDual(ch1: QrCodeGenerateData, ch2: QrCodeGenerateData, 
     }
   }
 
-  svg += `<rect fill="white" width="${width}" height="${height}"/>`
+  svg += `<rect fill="black" width="${width}" height="${height}"/>`
   // This allows the "black" blocks remain "dark" in the RED/BLUE-only channel while decoding
-  svg += `<path fill="rgb(0, 255, 255)" d="${ch1path}"/>`
-  svg += `<path fill="rgb(255, 255, 0)" d="${ch2path}"/>`
-  svg += `<path fill="rgb(0, 0, 0)" d="${bothPath}"/>`
+  svg += `<path fill="rgb(255, 0, 0)" d="${ch1path}"/>`
+  svg += `<path fill="rgb(0, 0, 255)" d="${ch2path}"/>`
+  svg += `<path fill="rgb(255, 0, 255)" d="${bothPath}"/>`
 
   svg += '</svg>'
   return svg

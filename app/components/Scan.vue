@@ -113,26 +113,30 @@ onMounted(async () => {
         const imageData = canvasContext.getImageData(0, 0, canvasContext.canvas.width, canvasContext.canvas.height)
         const data = imageData.data
         const length = data.length
-        const blue: number[] = Array.from({ length: length / 4 })
 
-        // RED-only channel
-        for (let i = 0; i < length; i += 4) {
-          data[i + 1] = data[i]!
-          blue[i / 4] = data[i + 2] ?? 0
-          data[i + 2] = data[i]!
+        // This should scan the BLACK + RED channel
+        try {
+          await decode()
         }
-        canvasContext.putImageData(imageData, 0, 0)
-        await decode()
+        // eslint-disable-next-line unused-imports/no-unused-vars
+        catch (e) {
+          // TODO: Better error handling
+        }
 
+        // Comment out lines below to mimic the default behavior
         // BLUE-only channel
         for (let i = 0; i < length; i += 4) {
-          const b = blue[i / 4] ?? 0
-          data[i] = b
-          data[i + 1] = b
-          data[i + 2] = b
+          data[i] = data[i + 2]!
+          data[i + 1] = data[i + 2]!
         }
         canvasContext.putImageData(imageData, 0, 0)
-        await decode()
+        try {
+          await decode()
+        }
+        // eslint-disable-next-line unused-imports/no-unused-vars
+        catch (e) {
+          // This is good to have, but not necessary
+        }
       },
     })
     selectedCamera.value && qrScanner.setCamera(selectedCamera.value)
