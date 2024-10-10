@@ -1,8 +1,9 @@
 <script lang="ts" setup>
 import { toUint8Array } from 'js-base64'
 import { binaryToBlock, createDecoder, readFileHeaderMetaFromBuffer } from 'luby-transform'
-
 import QrScanner from 'qr-scanner'
+
+import { createDecodeWorker } from '~/composables/decode-worker'
 import { useKiloBytesNumberFormat } from '~/composables/intlNumberFormat'
 import { useBytesRate } from '~/composables/timeseries'
 import { CameraSignalStatus } from '~/types'
@@ -156,7 +157,15 @@ async function updateCameraStatus() {
   }
 }
 
-const decoder = ref(createDecoder())
+const decoderWorker = createDecodeWorker()
+onUnmounted(() => decoderWorker.dispose())
+const decoderStatus = ref<Awaited<ReturnType<typeof decoderWorker.getStatus>>>({
+  encodedBlocks: new Set(),
+  decodedData: [],
+  encodedCount: 0,
+  decodedCount: 0,
+  meta: null!,
+})
 
 const k = ref(0)
 const bytes = ref(0)
@@ -170,7 +179,7 @@ const dataUrl = ref<string>()
 const dots = useTemplateRef<HTMLDivElement[]>('dots')
 const status = ref<number[]>([])
 const decodedBlocks = computed(() => status.value.filter(i => i === 1).length)
-const receivedBytes = computed(() => decoder.value.encodedCount * (decoder.value.meta?.data.length ?? 0))
+const receivedBytes = computed(() => decoderStatus.value.encodedCount * (decoderStatus.value.meta?.data.length ?? 0))
 
 const filename = ref<string | undefined>()
 const contentType = ref<string | undefined>()
@@ -182,10 +191,10 @@ const receivedBytesFormatted = useKiloBytesNumberFormat(computed(() => (received
 function getStatus() {
   const array = Array.from({ length: k.value }, () => 0)
   for (let i = 0; i < k.value; i++) {
-    if (decoder.value.decodedData[i] != null)
+    if (decoderStatus.value.decodedData[i] != null)
       array[i] = 1
   }
-  for (const block of decoder.value.encodedBlocks) {
+  for (const block of decoderStatus.value.encodedBlocks) {
     for (const i of block.indices) {
       if (array[i] === 0 || array[i]! > block.indices.length) {
         array[i] = block.indices.length
@@ -231,6 +240,7 @@ function toDataURL(data: Uint8Array | string | any, type: string): string {
   }
 }
 
+let decoderInitPromise: Promise<any> | undefined
 async function scanFrame(result: QrScanner.ScanResult) {
   cameraSignalStatus.value = CameraSignalStatus.Ready
 
@@ -238,7 +248,7 @@ async function scanFrame(result: QrScanner.ScanResult) {
     return
 
   bytesReceived.value += result.data.length
-  totalValidBytesReceived.value = decoder.value.encodedCount * (decoder.value.meta?.data.length ?? 0)
+  totalValidBytesReceived.value = decoderStatus.value.encodedCount * (decoderStatus.value.meta?.data.length ?? 0)
 
   // Do not process the same QR code twice
   if (cached.has(result.data))
@@ -252,7 +262,7 @@ async function scanFrame(result: QrScanner.ScanResult) {
   const data = binaryToBlock(binary)
   // Data set changed, reset decoder
   if (checksum.value !== data.checksum) {
-    decoder.value = createDecoder()
+    decoderInitPromise = decoderWorker.createDecoder()
     checksum.value = data.checksum
     bytes.value = data.bytes
     k.value = data.k
@@ -268,17 +278,19 @@ async function scanFrame(result: QrScanner.ScanResult) {
   else if (endTime.value) {
     return
   }
+  await decoderInitPromise
 
   cached.add(result.data)
   k.value = data.k
 
   data.indices.map(i => pluse(i))
-  const success = decoder.value.addBlock(data)
+  const success = await decoderWorker.addBlock(data)
+  decoderStatus.value = await decoderWorker.getStatus()
   status.value = getStatus()
   if (success) {
     endTime.value = performance.now()
 
-    const merged = decoder.value.getDecoded()!
+    const merged = (await decoderWorker.getDecoded())!
     const [mergedData, meta] = readFileHeaderMetaFromBuffer(merged)
     dataUrl.value = toDataURL(mergedData, meta.contentType)
 
@@ -350,7 +362,7 @@ function now() {
         <span text-neutral-500>Decoded</span>
         <span text-right md:text-left>{{ decodedBlocks }}</span>
         <span text-neutral-500>Received blocks</span>
-        <span text-right md:text-left>{{ decoder.encodedCount }}</span>
+        <span text-right md:text-left>{{ decoderStatus.encodedCount }}</span>
         <span text-neutral-500>Expected bytes</span>
         <span text-right md:text-left>{{ bytesFormatted }}</span>
         <span text-neutral-500>Received bytes</span>
@@ -427,7 +439,7 @@ function now() {
 
     <Collapsable label="Blocks">
       <div flex="~ gap-1 wrap" max-w-150 text-xs>
-        <div v-for="i, idx of decoder.encodedBlocks" :key="idx" border="~ gray/10 rounded" p1>
+        <div v-for="i, idx of decoderStatus.encodedBlocks" :key="idx" border="~ gray/10 rounded" p1>
           <template v-for="x, idy of i.indices" :key="x">
             <span v-if="idy !== 0" op25>, </span>
             <span :style="{ color: `hsl(${x * 40}, 40%, 60%)` }">{{ x }}</span>
