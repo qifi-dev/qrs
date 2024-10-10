@@ -15,6 +15,7 @@ const props = withDefaults(defineProps<{
 
 const bytesReceived = ref(0)
 const totalValidBytesReceived = ref(0)
+const shutterCount = ref(0)
 
 const { formatted: currentValidBytesSpeedFormatted } = useBytesRate(totalValidBytesReceived, {
   interval: 250,
@@ -25,6 +26,14 @@ const { formatted: currentValidBytesSpeedFormatted } = useBytesRate(totalValidBy
 })
 
 const { formatted: currentBytesFormatted } = useBytesRate(bytesReceived, {
+  interval: 250,
+  timeWindow: 1000,
+  type: 'counter',
+  sampleRate: 50,
+  maxDataPoints: 100,
+})
+
+const { bytesRate: fps } = useBytesRate(shutterCount, {
   interval: 250,
   timeWindow: 1000,
   type: 'counter',
@@ -57,16 +66,8 @@ watch(cameras, () => {
 // const results = defineModel<Set<string>>('results', { default: new Set() })
 
 let qrScanner: QrScanner | undefined
-let timestamp = 0
-const fps = ref(0)
-function setFps() {
-  const now = Date.now()
-  fps.value = 1000 / (now - timestamp)
-  timestamp = now
-}
 
 const error = ref<any>()
-const shutterCount = ref(0)
 const video = shallowRef<HTMLVideoElement>()
 const videoWidth = ref(0)
 const videoHeight = ref(0)
@@ -103,8 +104,10 @@ onMounted(async () => {
       },
       preferredCamera: selectedCamera.value,
       onDecodeError(e) {
-        if (e.toString() !== 'No QR code found')
+        if (e && e.toString && !e.toString().includes('No QR code found')) {
+          console.error(e)
           error.value = e
+        }
       },
     })
     selectedCamera.value && qrScanner.setCamera(selectedCamera.value)
@@ -229,8 +232,6 @@ function toDataURL(data: Uint8Array | string | any, type: string): string {
 }
 
 async function scanFrame(result: QrScanner.ScanResult) {
-  shutterCount.value += 1
-
   cameraSignalStatus.value = CameraSignalStatus.Ready
 
   if (!result.data)
@@ -242,7 +243,9 @@ async function scanFrame(result: QrScanner.ScanResult) {
   // Do not process the same QR code twice
   if (cached.has(result.data))
     return
-  setFps()
+  if (cached.size && result.data) {
+    shutterCount.value += 1
+  }
 
   error.value = undefined
   const binary = toUint8Array(result.data)
