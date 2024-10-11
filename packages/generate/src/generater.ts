@@ -1,5 +1,5 @@
 import type { EncodedBlock } from 'luby-transform'
-import { type QrCodeGenerateOptions, type QrCodeGenerateSvgOptions, type QrCodeGenerateUnicodeOptions, encode as qrEncode, renderANSI, renderSVG, renderUnicode } from 'uqr'
+import { type QrCodeGenerateOptions, type QrCodeGenerateSvgOptions, type QrCodeGenerateUnicodeOptions, encode as qrEncode, renderANSI, renderSVG, renderUnicode, renderUnicodeCompact } from 'uqr'
 import { createGeneraterWithRender } from './base-generater'
 import { addUrlPrefix, blockToBase64, type GeneraterBaseOptions } from './shared'
 
@@ -31,11 +31,11 @@ function withRenderUnicode(options: GeneraterBaseOptions<QrCodeGenerateUnicodeOp
  * Render QR Code with two rows into one line with unicode ▀, ▄, █,  . It is useful when you want to display QR Code in terminal with limited height.
  */
 export const createGeneraterUnicodeCompact = /* @__PURE__ */ createGeneraterWithRender(withRenderUnicodeCompact)
-function withRenderUnicodeCompact(options: GeneraterBaseOptions<QrCodeGenerateUnicodeOptions>) {
+function withRenderUnicodeCompact(options: GeneraterBaseOptions<QrCodeGenerateOptions>) {
   return (data: EncodedBlock) => {
     let base64str = blockToBase64(data)
     base64str = addUrlPrefix(options.urlPrefix, base64str)
-    return renderUnicode(base64str, options)
+    return renderUnicodeCompact(base64str, options)
   }
 }
 
