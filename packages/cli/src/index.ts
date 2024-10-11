@@ -3,6 +3,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
+import readline from 'node:readline'
 import { appendFileHeaderMetaToBuffer, createGeneraterANSI } from '@qifi/generate'
 import mime from 'mime'
 
@@ -33,14 +34,17 @@ async function generateQRCodes(filePath: string, sliceSize: number = 80, fps: nu
   })
 
   // Clear console function
-  const clearConsole = () => process.stdout.write('\x1Bc')
+  const clearConsole = () => {
+    readline.cursorTo(process.stdout, 0, 0)
+    readline.clearScreenDown(process.stdout)
+  }
 
   // Display QR codes
   for (const blockQRCode of generator.fountain()) {
     clearConsole()
-    console.log(blockQRCode)
-    console.log(`${meta.filename} (${meta.contentType})`, '|', 'size:', data.length, 'bytes')
-    await new Promise(resolve => setTimeout(resolve, 1000 / fps)) // Display each QR code for 1 second
+    process.stdout.write(`${blockQRCode}\n`)
+    process.stdout.write(`${meta.filename} (${meta.contentType}) | size: ${data.length} bytes`)
+    await new Promise(resolve => setTimeout(resolve, 1000 / fps))
   }
 }
 
