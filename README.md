@@ -33,6 +33,7 @@ Stream data through multiple QRCodes
 
 ## Sub-packages
 
+- [QiFi CLI](./packages/cli) - CLI for streaming QR code file transmission
 - [luby-transform](./packages/luby-transform) - Luby Transform encoding and decoding
 - [@qifi/generate](./packages/generate) - Stream Generated QR Codes for data transmission
 

@@ -31,6 +31,26 @@ Stream Generated QR Codes for file transmission in your terminal
 
 ## Usage
 
+Get document
+
 ```bash
-npx qifi <file> [options]
+npx qifi --help
 ```
+
+Stream file
+
+```bash
+npx qifi ./file.txt
+```
+
+Stream file with custom chunk size
+
+```bash
+npx qifi -ICS=1000 ./file.txt
+```
+
+You can use any scanner to scan the dynamic QR code. This will redirect to [a scanner website in the browser](https://qrss.netlify.app) to actually obtain the file data from the QR code.
+
+## Demo
+
+![Demo](../../public/qifi-cli-demo.jpg)
