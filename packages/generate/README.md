@@ -9,7 +9,7 @@
     <img alt="docs" src="https://img.shields.io/badge/-docs%20%26%20demos-1e8a7a">
   </a>
   <a href="https://github.com/sponsors/LittleSound">
-    <img alt="docs" src="https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=%23fe8e86">
+    <img alt="sponsors" src="https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=%23fe8e86">
   </a>
 </p>
 
