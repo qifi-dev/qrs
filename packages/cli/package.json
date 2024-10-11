@@ -1,0 +1,38 @@
+{
+  "name": "@qifi/cli",
+  "type": "module",
+  "version": "0.0.3",
+  "description": "Stream Generated QR Codes for file transmission in your terminal",
+  "author": "Rizumu Ayaka <rizumu@ayaka.moe>",
+  "license": "MIT",
+  "homepage": "https://github.com/qifi-dev/qrs#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/qifi-dev/qrs.git",
+    "directory": "packages/cli"
+  },
+  "bug": "https://github.com/qifi-dev/qrs/issues",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "main": "./dist/index.mjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "tsx ./src",
+    "build": "unbuild",
+    "stub": "unbuild --stub"
+  },
+  "dependencies": {
+    "@qifi/generate": "workspace:*",
+    "mime": "^4.0.4",
+    "tsx": "^4.19.1"
+  }
+}
