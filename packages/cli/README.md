@@ -1,4 +1,4 @@
-# @qifi/generate
+# QiFi CLI
 
 <!-- Some beautiful tags -->
 <p align="left">
@@ -9,11 +9,11 @@
     <img alt="docs" src="https://img.shields.io/badge/-docs%20%26%20demos-1e8a7a">
   </a>
   <a href="https://github.com/sponsors/LittleSound">
-    <img alt="docs" src="https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=%23fe8e86">
+    <img alt="sponsors" src="https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=%23fe8e86">
   </a>
 </p>
 
-Stream Generated QR Codes for data transmission
+Stream Generated QR Codes for file transmission in your terminal
 
 ## Sponsors
 
@@ -31,29 +31,6 @@ Stream Generated QR Codes for data transmission
 
 ## Usage
 
-```javascript
-import {
-  createGeneraterANSI,
-  createGeneraterUnicode,
-  createGeneraterUnicodeCompact,
-  createGeneraterSVG,
-  createGeneraterQRCodeArray,
-} from '@qifi/generate'
-
-const generaterSvg = createGeneraterSVG(new Uint8Array(file.buffer))
-
-const generaterANSI = createGeneraterANSI(new Uint8Array(file.buffer), {
-  // Size of each data slice
-  sliceSize: 250,
-  // Error correction level
-  ecc: 'L',
-  // Border width
-  border: 2,
-})
-
-// display QR Code in terminal
-for (const blockQRCode of generaterANSI()) {
-  console.log(blockQRCode)
-}
-
+```bash
+npx qifi <file> [options]
 ```

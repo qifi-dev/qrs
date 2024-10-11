@@ -22,17 +22,20 @@
   "main": "./dist/index.mjs",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.mts",
+  "bin": {
+    "qifi": "./bin/qifi.mjs"
+  },
   "files": [
     "dist"
   ],
   "scripts": {
-    "dev": "tsx ./src",
+    "dev": "tsx ./src/cli",
     "build": "unbuild",
     "stub": "unbuild --stub"
   },
   "dependencies": {
     "@qifi/generate": "workspace:*",
-    "mime": "^4.0.4",
-    "tsx": "^4.19.1"
+    "cac": "^6.7.14",
+    "mime": "^4.0.4"
   }
 }

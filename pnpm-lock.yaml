@@ -78,6 +78,9 @@ importers:
       pinia:
         specifier: ^2.2.4
         version: 2.2.4(typescript@5.6.2)(vue@3.5.6(typescript@5.6.2))
+      tsx:
+        specifier: ^4.19.1
+        version: 4.19.1
       typescript:
         specifier: ^5.6.2
         version: 5.6.2
@@ -96,12 +99,12 @@ importers:
       '@qifi/generate':
         specifier: workspace:*
         version: link:../generate
+      cac:
+        specifier: ^6.7.14
+        version: 6.7.14
       mime:
         specifier: ^4.0.4
         version: 4.0.4
-      tsx:
-        specifier: ^4.19.1
-        version: 4.19.1
 
   packages/generate:
     dependencies:
@@ -5778,11 +5781,6 @@ packages:
   tslib@2.6.3:
     resolution: {integrity: sha512-xNvxJEOUiWPGhUuUdQgAJPKOOJfGnIyKySOc09XkKsgdUV/3E2zvwZYdejjmRgPCgcym1juLH3226yA7sEFJKQ==}
 
-  tsx@4.17.0:
-    resolution: {integrity: sha512-eN4mnDA5UMKDt4YZixo9tBioibaMBpoxBkD+rIPAjVmYERSG0/dWEY1CEFuV89CgASlKL499q8AhmkMnnjtOJg==}
-    engines: {node: '>=18.0.0'}
-    hasBin: true
-
   tsx@4.19.1:
     resolution: {integrity: sha512-0flMz1lh74BR4wOvBjuh9olbnwqCPc35OOlfyzHba0Dc+QNUeWX/Gq2YTbnwcWPO3BMd8fkzRVrHcsR+a7z7rA==}
     engines: {node: '>=18.0.0'}
@@ -11038,7 +11036,7 @@ snapshots:
       jiti-v1: jiti@1.21.6
       pathe: 1.1.2
       pkg-types: 1.2.0
-      tsx: 4.17.0
+      tsx: 4.19.1
     transitivePeerDependencies:
       - supports-color
 
@@ -13127,13 +13125,6 @@ snapshots:
       typescript: 5.6.2
 
   tslib@2.6.3: {}
-
-  tsx@4.17.0:
-    dependencies:
-      esbuild: 0.23.1
-      get-tsconfig: 4.7.6
-    optionalDependencies:
-      fsevents: 2.3.3
 
   tsx@4.19.1:
     dependencies:
