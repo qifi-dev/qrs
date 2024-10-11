@@ -1,5 +1,5 @@
 {
-  "name": "@qifi/cli",
+  "name": "qifi",
   "type": "module",
   "version": "0.0.3",
   "description": "Stream Generated QR Codes for file transmission in your terminal",
