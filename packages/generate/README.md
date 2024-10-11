@@ -52,8 +52,35 @@ const generaterANSI = createGeneraterANSI(new Uint8Array(file.buffer), {
 })
 
 // display QR Code in terminal
-for (const blockQRCode of generaterANSI()) {
+for (const blockQRCode of generaterANSI.fountain()) {
   console.log(blockQRCode)
 }
 
 ```
+
+### With meta data
+
+If you want to transfer the metadata of the file:
+
+```javascript
+import {
+  appendFileHeaderMetaToBuffer,
+  readFileHeaderMetaFromBuffer,
+} from '@qifi/generate'
+
+const data = new Uint8Array(file.buffer)
+const meta = {
+  filename: file.name,
+  contentType: file.type,
+}
+const merged = appendFileHeaderMetaToBuffer(data, meta)
+const generater = createGeneraterUnicode(merged)
+
+// Send blocks to the receiver
+for (const block of generater.fountain()) {
+  // display QR Code in terminal
+  console.log(blockQRCode)
+}
+```
+
+and you can use `appendMetaToBuffer` and `readMetaFromBuffer` to add and read custom metadata.
