@@ -4,13 +4,13 @@ import { blockToBinary, type EncodedBlock } from 'luby-transform'
 export type CreateBlockRenderFn<Result, RenderOptions> = (renderOptions: GeneraterBaseOptions<RenderOptions>) => (block: EncodedBlock) => Result
 
 export type GeneraterBaseOptions<RenderOptions> = {
-  indicesSize?: number
+  sliceSize?: number
   compress?: boolean
   urlPrefix?: string
 } & RenderOptions
 
 export const GeneraterDefaultOptions = {
-  indicesSize: 500,
+  sliceSize: 500,
   urlPrefix: '',
 }
 

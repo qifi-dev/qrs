@@ -155,19 +155,19 @@ export class LtDecoder {
       return
     }
 
-    const indicesSize = this.meta.data.length
+    const sliceSize = this.meta.data.length
     const blocks = this.decodedData as Uint8Array[]
     const decodedData = new Uint8Array(this.meta.bytes)
 
     blocks.forEach((block, i) => {
-      const start = i * indicesSize
-      if (start + indicesSize > decodedData.length) {
+      const start = i * sliceSize
+      if (start + sliceSize > decodedData.length) {
         for (let j = 0; j < decodedData.length - start; j++) {
           decodedData[start + j] = block[j]!
         }
       }
       else {
-        decodedData.set(block, i * indicesSize)
+        decodedData.set(block, i * sliceSize)
       }
     })
 

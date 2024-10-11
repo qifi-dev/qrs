@@ -135,7 +135,7 @@ Creates a new `LtEncoder` instance for encoding data.
 #### Parameters
 
 - `data` (`Uint8Array`): The raw data to be encoded.
-- `indicesSize` (`number`): The size of each block.
+- `sliceSize` (`number`): The size of each block.
 - `compress` (`boolean`, optional): Whether to compress the data. Defaults to `true`.
 
 #### Returns

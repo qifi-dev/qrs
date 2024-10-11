@@ -7,3 +7,10 @@ export {
 
   GeneraterDefaultOptions,
 } from './shared'
+
+export {
+  appendFileHeaderMetaToBuffer,
+  appendMetaToBuffer,
+  readFileHeaderMetaFromBuffer,
+  readMetaFromBuffer,
+} from 'luby-transform'

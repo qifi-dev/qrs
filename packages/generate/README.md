@@ -44,7 +44,7 @@ const generaterSvg = createGeneraterSVG(new Uint8Array(file.buffer))
 
 const generaterANSI = createGeneraterANSI(new Uint8Array(file.buffer), {
   // Size of each data slice
-  indicesSize: 250,
+  sliceSize: 250,
   // Error correction level
   ecc: 'L',
   // Border width
