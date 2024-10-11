@@ -17,7 +17,7 @@ export function createGeneraterWithRender<Result, RenderOptions>(createRender: C
       /**
        * Generate random encoded blocks that **never** ends
        */
-      *fountain(): Generator<Result> {
+      *fountain(): Generator<Result, never> {
         while (true) {
           _fountain ||= encoder.fountain()
           const block = _fountain.next().value

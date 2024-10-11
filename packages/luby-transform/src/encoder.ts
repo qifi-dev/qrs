@@ -46,7 +46,7 @@ export class LtEncoder {
   /**
    * Generate random encoded blocks that **never** ends
    */
-  *fountain(): Generator<EncodedBlock> {
+  *fountain(): Generator<EncodedBlock, never> {
     while (true) {
       const degree = getRandomDegree(this.k)
       const selectedIndices = getRandomIndices(this.k, degree)
