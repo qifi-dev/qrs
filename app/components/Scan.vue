@@ -221,23 +221,9 @@ function pluse(index: number) {
   el.style.filter = 'none'
 }
 
-/**
- * Proposed ideal method to convert data to a data URL
- *
- * @param data - The data to convert
- * @param type - The content type of the data
- */
-function toDataURL(data: Uint8Array | string | any, type: string): string {
-  if (type.startsWith('text/')) {
-    return URL.createObjectURL(new Blob([new TextEncoder().encode(data)], { type: 'text/plain' }))
-  }
-  else if (type === 'application/json') {
-    const json = JSON.stringify(data)
-    return URL.createObjectURL(new Blob([new TextEncoder().encode(json)], { type: 'application/json' }))
-  }
-  else {
-    return URL.createObjectURL(new Blob([data], { type: 'application/octet-stream' }))
-  }
+function toDataURL(data: Uint8Array, type: string): string {
+  type ||= 'application/octet-stream'
+  return URL.createObjectURL(new Blob([data], { type }))
 }
 
 let decoderInitPromise: Promise<any> | undefined

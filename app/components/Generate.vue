@@ -62,6 +62,10 @@ onMounted(() => {
         <span text-right md:text-left>{{ count }}</span>
         <span text-neutral-500>FPS</span>
         <span text-right md:text-left>{{ framePerSecond.toFixed(2) }}</span>
+        <span text-neutral-500>Filename</span>
+        <span text-right md:text-left>{{ props.filename }}</span>
+        <span text-neutral-500>Content Type</span>
+        <span text-right md:text-left>{{ props.contentType }}</span>
       </div>
     </Collapsable>
     <div
