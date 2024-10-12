@@ -111,7 +111,9 @@ onMounted(async () => {
         }
       },
     })
-    selectedCamera.value && qrScanner.setCamera(selectedCamera.value)
+    selectedCamera.value && setTimeout(() => {
+      qrScanner!.setCamera(selectedCamera.value!)
+    })
     qrScanner.setInversionMode('both')
     qrScanner.start()
     updateCameraStatus()
@@ -184,6 +186,7 @@ const receivedBytes = computed(() => decoderStatus.value.encodedCount * (decoder
 const filename = ref<string | undefined>()
 const contentType = ref<string | undefined>()
 const textContent = ref<string | undefined>()
+const dataType = ref<'file' | 'link'>('file')
 
 const bytesFormatted = useKiloBytesNumberFormat(computed(() => (bytes.value / 1024).toFixed(2)))
 const receivedBytesFormatted = useKiloBytesNumberFormat(computed(() => (receivedBytes.value / 1024).toFixed(2)))
@@ -295,38 +298,24 @@ async function scanFrame(result: QrScanner.ScanResult) {
     contentType.value = meta.contentType
 
     if (contentType.value.startsWith('text/')) {
-      textContent.value = new TextDecoder().decode(mergedData)
+      const text = new TextDecoder().decode(mergedData)
 
+      textContent.value = text
       // auto open if it's a URL
-      if (/^https?:\/\//.test(textContent.value)) {
-        window.open(textContent.value, '_blank')
+      if (/^https?:\/\//.test(text)) {
+        dataType.value = 'link'
+
+        setTimeout(() => {
+          try {
+            window.open(text, '_blank')
+          }
+          catch (e) {
+            console.error(e)
+          }
+        }, 250)
       }
     }
   }
-  // console.log({ data })
-  // if (Array.isArray(data)) {
-  //   if (data[0] !== id.value) {
-  //     chunks.length = 0
-  //     dataUrl.value = undefined
-  //   }
-
-  //
-
-  //   chunks[data[2]] = data
-  //   pluse(data[2])
-
-  //   if (!length.value)
-  //     return
-  //   if (picked.value.every(i => !!i)) {
-  //     try {
-  //       const merged = merge(picked.value as SliceData[])
-  //       dataUrl.value = URL.createObjectURL(new Blob([merged], { type: 'application/octet-stream' }))
-  //     }
-  //     catch (e) {
-  //       error.value = e
-  //     }
-  //   }
-  // }
 }
 
 useUnsavedChange(() => {
@@ -344,84 +333,57 @@ function now() {
   <div items-left flex flex-col gap-4>
     <pre v-if="error" overflow-x-auto text-red v-text="error" />
 
-    <div w-full flex flex-wrap gap-2>
-      <button
-        v-for="item of cameras" :key="item.deviceId" :class="{
-          'text-blue': selectedCamera === item.deviceId,
-        }"
-        px2 py1 text-sm shadow-sm
-        border="~ gray/25 rounded-lg"
-        @click="selectedCamera = item.deviceId"
-      >
-        {{ item.label }}
-      </button>
-    </div>
-
-    <Collapsable>
-      <div grid-cols="[150px_1fr]" font="mono!" :class="endTime ? 'text-green-500' : ''" grid gap-x-4 gap-y-2 overflow-x-auto whitespace-nowrap p2 text-sm>
-        <span text-neutral-500>Filename</span>
-        <span text-right md:text-left>{{ filename || '<unknown>' }}</span>
-        <span text-neutral-500>Content-Type</span>
-        <span text-right md:text-left>{{ contentType || '<unknown>' }}</span>
-        <span text-neutral-500>Checksum</span>
-        <span text-right md:text-left>{{ checksum }}</span>
-        <span text-neutral-500>Indices</span>
-        <span text-right md:text-left>{{ k }}</span>
-        <span text-neutral-500>Decoded</span>
-        <span text-right md:text-left>{{ decodedBlocks }}</span>
-        <span text-neutral-500>Received blocks</span>
-        <span text-right md:text-left>{{ decoderStatus.encodedCount }}</span>
-        <span text-neutral-500>Expected bytes</span>
-        <span text-right md:text-left>{{ bytesFormatted }}</span>
-        <span text-neutral-500>Received bytes</span>
-        <span text-right md:text-left>{{ receivedBytesFormatted }} ({{ bytes === 0 ? 0 : (receivedBytes / bytes * 100).toFixed(2) }}%)</span>
-        <span text-neutral-500>Time elapsed</span>
-        <span text-right md:text-left>{{ k === 0 ? 0 : (((endTime || now()) - startTime) / 1000).toFixed(2) }} s</span>
-        <span text-neutral-500>Average bitrate</span>
-        <span text-right md:text-left>{{ (receivedBytes / 1024 / ((endTime || now()) - startTime) * 1000).toFixed(2) }} Kbps</span>
+    <Collapsable label="Cameras" :default="true">
+      <div w-full flex flex-wrap gap-2 p2>
+        <button
+          v-for="(item, index) of cameras" :key="item.deviceId" :class="{
+            'text-blue bg-blue/20': selectedCamera === item.deviceId,
+          }"
+          px2 py1 text-sm shadow-sm
+          border="~ gray/25 rounded-lg"
+          @click="selectedCamera = item.deviceId"
+        >
+          <span i-carbon-camera mr-1 inline-block align-text-top />
+          {{ item.label || `Camera ${index + 1}` }}
+        </button>
       </div>
     </Collapsable>
 
-    <Collapsable v-if="k" :default="k < 500">
-      <template #label>
-        <span>Packets</span>
-        <span ml-2 text-neutral-400>({{ k }})</span>
-      </template>
-      <div flex="~ col gap-2" p2>
-        <div flex="~ gap-0.4 wrap">
-          <div
-            v-for="x, idx of status"
-            :key="idx"
-            ref="dots"
-
-            flex="~ items-center justify-center"
-            h-4 w-4 overflow-hidden text-8px
-            border="~ rounded"
-            :class="x === 1 ? 'bg-green:100 border-green4!' : x > 1 ? 'bg-amber border-amber4 text-amber-900 dark:text-amber-200' : 'bg-gray:50 border-gray'"
-            :style="{ '--un-bg-opacity': Math.max(0.5, (11 - x) / 10) }"
-          >
-            {{ ([0, 1, 2].includes(x)) ? '' : x }}
+    <Collapsable v-if="dataUrl" label="Result" :default="true">
+      <div flex="~ col gap-2" relative>
+        <div flex="~ col gap-2" p2>
+          <div v-if="dataType === 'link'" :src="dataUrl" break-words text-wrap text-blue underline op80 hover:op100>
+            <a :href="textContent" target="_blank" rel="noopener noreferrer">{{ textContent }}</a>
+          </div>
+          <img v-else-if="contentType?.startsWith('image/')" :src="dataUrl">
+          <video v-else-if="contentType?.startsWith('video/')" controls autoplay muted>
+            <source :src="dataUrl" :type="contentType">
+          </video>
+          <div v-else-if="contentType?.startsWith('text/')" :src="dataUrl" break-words text-wrap>
+            {{ textContent }}
           </div>
         </div>
-      </div>
-    </Collapsable>
-
-    <Collapsable v-if="dataUrl" label="Download" :default="true">
-      <div flex="~ col gap-2" p2>
-        <img v-if="contentType?.startsWith('image/')" :src="dataUrl">
-        <video v-else-if="contentType?.startsWith('video/')" controls autoplay muted>
-          <source :src="dataUrl" :type="contentType">
-        </video>
-        <p v-else-if="contentType?.startsWith('text/')" :src="dataUrl">
-          {{ textContent }}
-        </p>
-        <a
-          :href="dataUrl"
-          :download="filename"
-          class="w-max border border-gray:50 rounded-md px2 py1 text-sm hover:bg-gray:10"
-        >
-          Download
-        </a>
+        <div sticky bottom-0 p4 shadow backdrop-blur-xl>
+          <a
+            v-if="dataType === 'file'"
+            :href="dataUrl"
+            :download="filename"
+            class="block w-full rounded-md bg-white px2 py1 text-center text-sm dark:bg-neutral-8"
+            border="~ gray/25 hover:gray:10" shadow="~ gray/25"
+          >
+            Download as file
+          </a>
+          <a
+            v-else-if="dataType === 'link'"
+            :href="textContent"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="block w-full rounded-md bg-white px2 py1 text-center text-sm dark:bg-neutral-8"
+            border="~ gray/25 hover:gray:10" shadow="~ gray/25"
+          >
+            Open as link
+          </a>
+        </div>
       </div>
     </Collapsable>
 
@@ -449,8 +411,57 @@ function now() {
       />
     </Camera>
 
-    <Collapsable label="Blocks">
-      <div flex="~ gap-1 wrap" max-w-150 text-xs>
+    <Collapsable label="Inspect">
+      <div grid-cols="[150px_1fr]" font="mono!" :class="endTime ? 'text-green-500' : ''" grid gap-x-4 gap-y-2 overflow-x-auto whitespace-nowrap p2 text-sm>
+        <span text-neutral-500>Filename</span>
+        <span text-right md:text-left>{{ filename || '<unknown>' }}</span>
+        <span text-neutral-500>Content-Type</span>
+        <span text-right md:text-left>{{ contentType || '<unknown>' }}</span>
+        <span text-neutral-500>Checksum</span>
+        <span text-right md:text-left>{{ checksum }}</span>
+        <span text-neutral-500>Indices</span>
+        <span text-right md:text-left>{{ k }}</span>
+        <span text-neutral-500>Decoded</span>
+        <span text-right md:text-left>{{ decodedBlocks }}</span>
+        <span text-neutral-500>Received blocks</span>
+        <span text-right md:text-left>{{ decoderStatus.encodedCount }}</span>
+        <span text-neutral-500>Expected bytes</span>
+        <span text-right md:text-left>{{ bytesFormatted }}</span>
+        <span text-neutral-500>Received bytes</span>
+        <span text-right md:text-left>{{ receivedBytesFormatted }} ({{ bytes === 0 ? 0 : (receivedBytes / bytes * 100).toFixed(2) }}%)</span>
+        <span text-neutral-500>Time elapsed</span>
+        <span text-right md:text-left>{{ k === 0 ? 0 : (((endTime || now()) - startTime) / 1000).toFixed(2) }} s</span>
+        <span text-neutral-500>Average bitrate</span>
+        <span text-right md:text-left>{{ (receivedBytes / 1024 / ((endTime || now()) - startTime) * 1000).toFixed(2) }} Kbps</span>
+      </div>
+    </Collapsable>
+
+    <Collapsable v-if="k">
+      <template #label>
+        <span>Packets</span>
+        <span ml-2 text-neutral-400>({{ k }})</span>
+      </template>
+      <div flex="~ col gap-2" p2>
+        <div flex="~ gap-0.4 wrap">
+          <div
+            v-for="x, idx of status"
+            :key="idx"
+            ref="dots"
+
+            flex="~ items-center justify-center"
+            h-4 w-4 overflow-hidden text-8px
+            border="~ rounded"
+            :class="x === 1 ? 'bg-green:100 border-green4!' : x > 1 ? 'bg-amber border-amber4 text-amber-900 dark:text-amber-200' : 'bg-gray:50 border-gray'"
+            :style="{ '--un-bg-opacity': Math.max(0.5, (11 - x) / 10) }"
+          >
+            {{ ([0, 1, 2].includes(x)) ? '' : x }}
+          </div>
+        </div>
+      </div>
+    </Collapsable>
+
+    <Collapsable v-if="k" label="Blocks">
+      <div flex="~ gap-1 wrap" max-w-150 p2 text-xs>
         <div v-for="i, idx of decoderStatus.encodedBlocks" :key="idx" border="~ gray/10 rounded" p1>
           <template v-for="x, idy of i.indices" :key="x">
             <span v-if="idy !== 0" op25>, </span>
