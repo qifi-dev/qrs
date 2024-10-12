@@ -296,6 +296,11 @@ async function scanFrame(result: QrScanner.ScanResult) {
 
     if (contentType.value.startsWith('text/')) {
       textContent.value = new TextDecoder().decode(mergedData)
+
+      // auto open if it's a URL
+      if (/^https?:\/\//.test(textContent.value)) {
+        window.open(textContent.value, '_blank')
+      }
     }
   }
   // console.log({ data })
