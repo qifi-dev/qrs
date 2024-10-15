@@ -20,6 +20,7 @@
   "dependencies": {
     "birpc": "^0.2.19",
     "js-base64": "^3.7.7",
+    "jsqr-es6": "1.4.0-1",
     "qr-scanner": "^1.4.2",
     "uqr": "^0.1.2"
   },

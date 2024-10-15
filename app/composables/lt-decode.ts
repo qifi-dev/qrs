@@ -1,7 +1,7 @@
 import type { EncodedBlock } from 'luby-transform'
-import type { DecoderWorkerFunctions } from './workers/decode'
+import type { DecoderWorkerFunctions } from './workers/lt-decode.worker'
 import { createBirpc } from 'birpc'
-import DecodeWorkerConstructor from './workers/decode?worker'
+import DecodeWorkerConstructor from './workers/lt-decode.worker?worker'
 
 export function createDecodeWorker() {
   const worker = new DecodeWorker()

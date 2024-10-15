@@ -3,8 +3,8 @@ import { toUint8Array } from 'js-base64'
 import { binaryToBlock, readFileHeaderMetaFromBuffer } from 'luby-transform'
 import QrScanner from 'qr-scanner'
 
-import { createDecodeWorker } from '~/composables/decode-worker'
 import { useKiloBytesNumberFormat } from '~/composables/intlNumberFormat'
+import { createDecodeWorker } from '~/composables/lt-decode'
 import { useBytesRate } from '~/composables/timeseries'
 import { CameraSignalStatus } from '~/types'
 
@@ -59,14 +59,18 @@ watchEffect(() => {
     selectedCamera.value = cameras.value[0]?.deviceId
 })
 
-watch(cameras, () => {
-  if (selectedCamera.value && cameras.value.filter(i => i.deviceId === selectedCamera.value).length === 0)
-    selectedCamera.value = ''
-})
-
 // const results = defineModel<Set<string>>('results', { default: new Set() })
 
 let qrScanner: QrScanner | undefined
+
+watch(cameras, () => {
+  if (selectedCamera.value && cameras.value.find(i => i.deviceId === selectedCamera.value)) {
+    setTimeout(() => {
+      qrScanner?.setCamera(selectedCamera.value!)
+      qrScanner?.start()
+    }, 250)
+  }
+})
 
 const error = ref<any>()
 const video = shallowRef<HTMLVideoElement>()
