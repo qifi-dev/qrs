@@ -1,49 +1,19 @@
-import type { EncodedBlock } from 'luby-transform'
-import type { DecoderWorkerFunctions } from './workers/lt-decode.worker'
+import type { LTDecoderWorkerFunctions } from './workers/lt-decode.worker'
 import { createBirpc } from 'birpc'
-import DecodeWorkerConstructor from './workers/lt-decode.worker?worker'
+import DecodeWorker from './workers/lt-decode.worker?worker'
 
-export function createDecodeWorker() {
+export function createLTDecodeWorker() {
   const worker = new DecodeWorker()
 
-  const rpc = Object.assign(createBirpc<DecoderWorkerFunctions>({}, {
-    post: worker.decodeWorker.postMessage.bind(worker.decodeWorker),
-    on: fn => worker.decodeWorker.addEventListener('message', event => fn(event.data)),
+  const rpc = Object.assign(createBirpc<LTDecoderWorkerFunctions>({}, {
+    post: worker.postMessage.bind(worker),
+    on: fn => worker.addEventListener('message', event => fn(event.data)),
   }), {
     worker,
     dispose() {
-      worker.decodeWorker.terminate()
+      worker.terminate()
     },
   })
 
   return rpc
-}
-
-class DecodeWorker {
-  decodeWorker: Worker
-  constructor() {
-    this.decodeWorker = new DecodeWorkerConstructor()
-  }
-
-  initDecoder(data?: EncodedBlock[]) {
-    this.decodeWorker.postMessage({ type: 'createDecoder', data })
-  }
-
-  addBlock(data: EncodedBlock) {
-    this.decodeWorker.postMessage({ type: 'addBlock', data })
-  }
-
-  onDecoded(callback: (data: Uint8Array | undefined) => void) {
-    const eventFn = (event: MessageEvent) => {
-      const { type, data } = event.data
-      if (type === 'decoded') {
-        callback(data)
-      }
-    }
-    this.decodeWorker.addEventListener('message', eventFn)
-
-    return () => {
-      this.decodeWorker.removeEventListener('message', eventFn)
-    }
-  }
 }

@@ -35,7 +35,7 @@ const workerFunctions = {
   },
 }
 
-export type DecoderWorkerFunctions = typeof workerFunctions
+export type LTDecoderWorkerFunctions = typeof workerFunctions
 
 createBirpc(workerFunctions, {
   post: globalThis.postMessage,

@@ -4,7 +4,7 @@ import { binaryToBlock, readFileHeaderMetaFromBuffer } from 'luby-transform'
 import QrScanner from 'qr-scanner'
 
 import { useKiloBytesNumberFormat } from '~/composables/intlNumberFormat'
-import { createDecodeWorker } from '~/composables/lt-decode'
+import { createLTDecodeWorker } from '~/composables/lt-decode'
 import { useBytesRate } from '~/composables/timeseries'
 import { CameraSignalStatus } from '~/types'
 
@@ -163,7 +163,7 @@ async function updateCameraStatus() {
   }
 }
 
-const decoderWorker = createDecodeWorker()
+const decoderWorker = createLTDecodeWorker()
 onUnmounted(() => decoderWorker.dispose())
 const decoderStatus = ref<Awaited<ReturnType<typeof decoderWorker.getStatus>>>({
   encodedBlocks: new Set(),
