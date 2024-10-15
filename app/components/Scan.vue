@@ -1,11 +1,12 @@
 <script lang="ts" setup>
+import type { QRCode } from 'jsqr-es6'
 import { toUint8Array } from 'js-base64'
-import { binaryToBlock, readFileHeaderMetaFromBuffer } from 'luby-transform'
-import QrScanner from 'qr-scanner'
 
+import { binaryToBlock, readFileHeaderMetaFromBuffer } from 'luby-transform'
 import { useKiloBytesNumberFormat } from '~/composables/intlNumberFormat'
 import { createLTDecodeWorker } from '~/composables/lt-decode'
 import { useBytesRate } from '~/composables/timeseries'
+import { setupUserMedia, useQRScanner } from '~/composables/useQRScanner'
 import { CameraSignalStatus } from '~/types'
 
 const props = withDefaults(defineProps<{
@@ -61,13 +62,11 @@ watchEffect(() => {
 
 // const results = defineModel<Set<string>>('results', { default: new Set() })
 
-let qrScanner: QrScanner | undefined
-
 watch(cameras, () => {
   if (selectedCamera.value && cameras.value.find(i => i.deviceId === selectedCamera.value)) {
     setTimeout(() => {
-      qrScanner?.setCamera(selectedCamera.value!)
-      qrScanner?.start()
+      // qrScanner?.setCamera(selectedCamera.value!)
+      // qrScanner?.start()
     }, 250)
   }
 })
@@ -77,62 +76,96 @@ const video = shallowRef<HTMLVideoElement>()
 const videoWidth = ref(0)
 const videoHeight = ref(0)
 
+useQRScanner({
+  video,
+  fps: () => props.maxScansPerSecond,
+  setupMedia: () => {
+    const deviceId = selectedCamera.value
+    return () => setupUserMedia({ deviceId })
+  },
+  onDecoded(data) {
+    try {
+      scanFrame(data)
+    }
+    catch (e) {
+      error.value = e
+      console.error(e)
+    }
+  },
+
+  // TODO some options
+  // calculateScanRegion: ({ videoHeight, videoWidth }) => {
+  //   const size = Math.min(videoWidth, videoHeight)
+  //   return {
+  //     x: size === videoWidth ? 0 : (videoWidth - size) / 2,
+  //     y: size === videoHeight ? 0 : (videoHeight - size) / 2,
+  //     width: size,
+  //     height: size,
+  //   }
+  // },
+  onDecodeError(e) {
+    if (e && e.toString && !e.toString().includes('No QR code found')) {
+      console.error(e)
+      error.value = e
+    }
+  },
+})
+
 onMounted(async () => {
-  watch([
-    () => props.maxScansPerSecond,
-    selectedCamera,
-  ], async ([maxScansPerSecond]) => {
-    if (qrScanner) {
-      qrScanner.destroy()
-      await new Promise(resolve => setTimeout(resolve, 1000))
-    }
-    qrScanner = new QrScanner(video.value!, async (result) => {
-      try {
-        await scanFrame(result)
-      }
-      catch (e) {
-        error.value = e
-        console.error(e)
-      }
-    }, {
-      maxScansPerSecond,
-      highlightCodeOutline: false,
-      highlightScanRegion: true,
-      calculateScanRegion: ({ videoHeight, videoWidth }) => {
-        const size = Math.min(videoWidth, videoHeight)
-        return {
-          x: size === videoWidth ? 0 : (videoWidth - size) / 2,
-          y: size === videoHeight ? 0 : (videoHeight - size) / 2,
-          width: size,
-          height: size,
-        }
-      },
-      preferredCamera: selectedCamera.value,
-      onDecodeError(e) {
-        if (e && e.toString && !e.toString().includes('No QR code found')) {
-          console.error(e)
-          error.value = e
-        }
-      },
-    })
-    selectedCamera.value && setTimeout(() => {
-      qrScanner!.setCamera(selectedCamera.value!)
-    })
-    qrScanner.setInversionMode('both')
-    qrScanner.start()
-    updateCameraStatus()
-  }, { immediate: true })
-  watch(selectedCamera, () => {
-    if (qrScanner && selectedCamera.value) {
-      qrScanner.setCamera(selectedCamera.value)
-      qrScanner.start()
-    }
-  })
+  // watch([
+  //   () => props.maxScansPerSecond,
+  //   selectedCamera,
+  // ], async ([maxScansPerSecond]) => {
+  //   if (qrScanner) {
+  //     qrScanner.destroy()
+  //     await new Promise(resolve => setTimeout(resolve, 1000))
+  //   }
+  //   qrScanner = new QrScanner(video.value!, async (result) => {
+  //     try {
+  //       await scanFrame(result)
+  //     }
+  //     catch (e) {
+  //       error.value = e
+  //       console.error(e)
+  //     }
+  //   }, {
+  //     maxScansPerSecond,
+  //     highlightCodeOutline: false,
+  //     highlightScanRegion: true,
+  //     calculateScanRegion: ({ videoHeight, videoWidth }) => {
+  //       const size = Math.min(videoWidth, videoHeight)
+  //       return {
+  //         x: size === videoWidth ? 0 : (videoWidth - size) / 2,
+  //         y: size === videoHeight ? 0 : (videoHeight - size) / 2,
+  //         width: size,
+  //         height: size,
+  //       }
+  //     },
+  //     preferredCamera: selectedCamera.value,
+  //     onDecodeError(e) {
+  //       if (e && e.toString && !e.toString().includes('No QR code found')) {
+  //         console.error(e)
+  //         error.value = e
+  //       }
+  //     },
+  //   })
+  //   selectedCamera.value && setTimeout(() => {
+  //     qrScanner!.setCamera(selectedCamera.value!)
+  //   })
+  //   qrScanner.setInversionMode('both')
+  //   qrScanner.start()
+  //   updateCameraStatus()
+  // }, { immediate: true })
+  // watch(selectedCamera, () => {
+  //   if (qrScanner && selectedCamera.value) {
+  //     qrScanner.setCamera(selectedCamera.value)
+  //     qrScanner.start()
+  //   }
+  // })
   useIntervalFn(() => {
     updateCameraStatus()
   }, 250)
 })
-onUnmounted(() => qrScanner && qrScanner.destroy())
 
 async function updateCameraStatus() {
   try {
@@ -206,9 +239,9 @@ function getStatus() {
       if (array[i] === 0 || array[i]! > block.indices.length) {
         array[i] = block.indices.length
       }
-      else {
-        console.warn(`Unexpected block #${i} status: ${array[i]}`)
-      }
+      // else {
+      //   console.warn(`Unexpected block #${i} status:`, array[i])
+      // }
     }
   }
   return array
@@ -234,7 +267,7 @@ function toDataURL(data: Uint8Array, type: string): string {
 }
 
 let decoderInitPromise: Promise<any> | undefined
-async function scanFrame(result: QrScanner.ScanResult) {
+async function scanFrame(result: QRCode) {
   cameraSignalStatus.value = CameraSignalStatus.Ready
   let strData = result.data
 
