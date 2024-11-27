@@ -5,16 +5,24 @@ dictionaries: []
 words:
   - Attributify
   - birpc
+  - bumpp
   - composables
+  - iconify
+  - jsqr
   - luby
+  - nuxi
   - Nuxt
+  - nuxtjs
+  - ohash
   - pako
+  - pinia
   - Positionals
   - qifi
   - QRCODE
   - Soliton
   - timeseries
   - unocss
+  - vueuse
   - wechat
 ignoreWords: []
 import: []
