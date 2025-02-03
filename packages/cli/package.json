@@ -36,6 +36,6 @@
   "dependencies": {
     "@qifi/generate": "workspace:*",
     "cac": "^6.7.14",
-    "mime": "^4.0.4"
+    "mime": "^4.0.6"
   }
 }
