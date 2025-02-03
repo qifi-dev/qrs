@@ -10,15 +10,15 @@ export type SliceData = [
   chunk: string,
 ]
 
-function arrayBufferToBase64(buffer: ArrayBuffer): string {
+function arrayBufferToBase64(buffer: ArrayBufferLike): string {
   return fromUint8Array(new Uint8Array(buffer))
 }
 
-function base64ToArrayBuffer(str: string): ArrayBuffer {
+function base64ToArrayBuffer(str: string): ArrayBufferLike {
   return toUint8Array(str).buffer
 }
 
-export function slice(input: string | ArrayBuffer, chunkSize = 256): SliceData[] {
+export function slice(input: string | ArrayBufferLike, chunkSize = 256): SliceData[] {
   const hash = getHash(input)
   const isBinary = typeof input !== 'string'
   const processed = typeof input !== 'string'
@@ -39,13 +39,13 @@ export function slice(input: string | ArrayBuffer, chunkSize = 256): SliceData[]
   )
 }
 
-export function merge(slices: SliceData[]): string | ArrayBuffer {
+export function merge(slices: SliceData[]): string | ArrayBufferLike {
   const merged = slices.map(i => i[4]).join('')
   const decompressed = decompressFromBase64(merged)
   const targetHash = slices[0]![0]
   const isBinary = slices[0]![3] === 0
 
-  const data: string | ArrayBuffer = isBinary
+  const data: string | ArrayBufferLike = isBinary
     ? base64ToArrayBuffer(decompressed)
     : decompressed
 
