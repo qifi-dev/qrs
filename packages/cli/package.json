@@ -1,7 +1,7 @@
 {
   "name": "qifi",
   "type": "module",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Stream Generated QR Codes for file transmission in your terminal",
   "author": "Rizumu Ayaka <rizumu@ayaka.moe>",
   "license": "MIT",
