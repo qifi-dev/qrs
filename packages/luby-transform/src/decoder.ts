@@ -2,7 +2,7 @@
 import type { EncodedBlock } from './shared'
 import { inflate } from 'pako'
 import { getChecksum } from './checksum'
-import { xorUint8Array } from './shared'
+import { isEitherArraySubset, xorUint8Array } from './shared'
 
 export function createDecoder(blocks?: EncodedBlock[]) {
   return new LtDecoder(blocks)
@@ -125,6 +125,32 @@ export class LtDecoder {
           }
           superblock.indices = Array.from(superIndicesSet)
           this.propagateDecoded(indicesToKey(superblock.indices), superblock)
+        }
+      }
+
+      // Optimizes encoded blocks by reducing redundant data through XOR operations
+      const reducibleCandidates: EncodedBlock[] = []
+      for (const index of indices) {
+        const candidateBlocks = encodedBlockIndexMap.get(index)
+        if (candidateBlocks) {
+          for (const candidate of candidateBlocks) {
+            if (candidate !== block && candidate.indices.length > indices.length) {
+              reducibleCandidates.push(candidate)
+            }
+          }
+        }
+      }
+      for (const reducibleBlock of reducibleCandidates) {
+        const updatedIndicesSet = new Set(reducibleBlock.indices)
+        if (isEitherArraySubset(reducibleBlock.indices, indices)) {
+          reducibleBlock.data = xorUint8Array(reducibleBlock.data, data)
+          for (const i of indices) {
+            updatedIndicesSet.delete(i)
+          }
+          reducibleBlock.indices = Array.from(updatedIndicesSet)
+          key = indicesToKey(block.indices)
+          encodedBlockKeyMap.delete(key)
+          this.propagateDecoded(key, reducibleBlock)
         }
       }
     }
