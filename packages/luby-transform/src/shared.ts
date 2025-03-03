@@ -66,3 +66,15 @@ export function xorUint8Array(a: Uint8Array, b: Uint8Array): Uint8Array {
 
   return result
 }
+
+// Check if one array is a subset of the other.
+export function isEitherArraySubset(
+  setA: number[],
+  setB: number[],
+): boolean {
+  const [optimizedSet, checkSet] = setA.length > setB.length
+    ? [new Set(setA), setB]
+    : [new Set(setB), setA]
+
+  return checkSet.every(e => optimizedSet.has(e))
+}

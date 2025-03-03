@@ -44,8 +44,7 @@ it('cross-blocks resolving 2', () => {
   expect(data).toEqual(buffer)
 })
 
-// TODO: get it work
-it.skip('cross-blocks resolving 3', () => {
+it('cross-blocks resolving 3', () => {
   const { buffer, encoder } = createEncoderWithIndices(5)
 
   const decoder = createDecoder()
@@ -60,6 +59,9 @@ it.skip('cross-blocks resolving 3', () => {
   // Here we can have [0] and [1]
   expect(decoder.decodedCount).toBe(3)
   decoder.addBlock(encoder.createBlock([4]))
+  decoder.addBlock(encoder.createBlock([2, 4]))
+  // Here we can have [2] and [3]
+  expect(decoder.decodedCount).toBe(5)
 
   const data = decoder.getDecoded()
   expect(data).toBeDefined()
