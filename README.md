@@ -47,6 +47,46 @@ This situation of streaming QR code data transmission is similar to the "Binary 
 
 Scientists have already achieved very mature research results on how to efficiently transmit data in BEC, one of which is using "Fountain Codes." Fountain Codes are a type of error-correcting code that can effectively transmit information even in the case of data loss. This project uses Luby Transform coding, which is a type of Fountain Code. The basic principle is to divide the original data into multiple small blocks and then generate an unlimited number of encoded blocks through encoding. The receiver only needs to receive enough encoded blocks (usually slightly more than the original blocks) to reconstruct the original data.
 
+## Using Offline
+There are two main ways to install and use it in offline mode, on both, computer and phone devices 
+
+**Running on computer**
+
+First, and easiest one
+- Download [index.html](https://github.com/iuvi7/qrs/blob/main/public/index.html) as Raw file from repository
+- Open it in your browser and run in offline mode (For Firefox press Alt -> Select "File" and then "Work in autonomous mode")
+- NOTE: If you want to Send file, before choosing it, firstly push "Receive" and then once again on "Send", and you are ready to go
+
+Second, but harder way using [Node.js](https://nodejs.org/en) and pnpm
+
+- Install Node.js
+- Do next commands
+
+sudo npm install -g pnpm  
+git clone [https://github.com/qifi-dev/qrs.git](https://github.com/qifi-dev/qrs.git)  
+cd qrs  
+pnpm install  
+pnpm build  
+node .output/server/index.mjs
+
+- Visit 127.0.0.1:3000 in your browser to use it
+
+**Running on phone**
+
+First, and easiest one (tested on Brave for Android)
+
+- Visit https://qrss.netlify.app/
+- Go to Menu and choose "Add to Main Screen"
+- Install it and use without internet
+
+Second, running small local server
+- Download [index.html](https://github.com/iuvi7/qrs/blob/main/public/index.html) file from repository
+- Install and run [ServeIt](https://f-droid.org/ru/packages/com.example.flutter_http_server/) from F-Droid
+- Choose directory with index.html and push "Start Server"
+- Open 127.0.0.1:8888 in your browser
+- Go to settings, choose "Version for Desktop"
+- NOTE: If you want to Send file, before choosing it, firstly Push "Receive" and then once again on "Send", and you are ready to go
+
 ## Demo
 
 <video src="https://github.com/user-attachments/assets/b4f8a122-02c7-4754-9ec0-121e42f8b22d"></video>
