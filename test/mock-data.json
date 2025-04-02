@@ -1,7 +1,7 @@
 {
   "type": "module",
   "private": true,
-  "packageManager": "pnpm@9.11.0",
+  "packageManager": "pnpm@10.7.1",
   "scripts": {
     "build": "nuxi build",
     "dev:pwa": "VITE_PLUGIN_PWA=true nuxi dev",
