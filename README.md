@@ -31,6 +31,79 @@ Stream data through multiple QRCodes
 
 [Live demo](https://qrss.netlify.app/)
 
+## Build & run
+
+1. Install Dependencies
+
+You need install [Node.js](https://nodejs.org) first.The project uses `pnpm` as its package manager. First, ensure you have `pnpm` installed:
+
+```bash
+npm install -g pnpm
+```
+
+Then, install the project dependencies:
+
+```bash
+pnpm install
+```
+
+2. Build the Project
+
+Build the project using the command specified in the `package.json` and `netlify.toml`:
+
+```bash
+pnpm run build
+```
+
+This will generate the output in the `.output` directory.
+
+Alternatively, if you want to run the development server to test changes:
+
+```bash
+pnpm run dev
+```
+
+3. Serve the Project Locally
+
+if your target environment have `Node.js`, you can copy entire `.output` directory to where you want.You can preview this build using:
+
+```bash
+node .output/server/index.mjs
+```
+
+if your target environment don't have `Node.js`, you cat just host those static files.
+
+```bash
+cd .output/public
+python -m http.server
+```
+
+You will usually encounter the following errors.
+
+```
+Failed to load module script: Expected a JavaScript module script but the server responded with a MIME type of "text/plain". Strict MIME type checking is enforced for module scripts per HTML spec.
+```
+
+you need a custom web server, Run in the `.output/public` directory:
+
+```python
+# python custom_http_server.py
+from http.server import SimpleHTTPRequestHandler, HTTPServer
+
+class CustomHandler(SimpleHTTPRequestHandler):
+    def end_headers(self):
+        self.extensions_map.update({
+            ".js": "application/javascript",
+        })
+        super().end_headers()
+
+ADDR = '0.0.0.0'
+PORT = 8000
+with HTTPServer((ADDR, PORT), CustomHandler) as httpd:
+    print(f"Serving on http://{ADDR}:{PORT}")
+    httpd.serve_forever()
+```
+
 ## Sub-packages
 
 - [QiFi CLI](./packages/cli) - CLI for streaming QR code file transmission
