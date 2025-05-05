@@ -33,7 +33,7 @@ Stream data through multiple QRCodes
 
 ## Build & run
 
-1. Install Dependencies
+**1. Install Dependencies**
 
 You need install [Node.js](https://nodejs.org) first.The project uses `pnpm` as its package manager. First, ensure you have `pnpm` installed:
 
@@ -47,7 +47,7 @@ Then, install the project dependencies:
 pnpm install
 ```
 
-2. Build the Project
+**2. Build the Project**
 
 Build the project using the command specified in the `package.json` and `netlify.toml`:
 
@@ -63,7 +63,7 @@ Alternatively, if you want to run the development server to test changes:
 pnpm run dev
 ```
 
-3. Serve the Project Locally
+**3. Serve the Project Locally**
 
 if your target environment have `Node.js`, you can copy entire `.output` directory to where you want.You can preview this build using:
 
