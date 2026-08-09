@@ -1,9 +1,10 @@
 [build]
-publish = "dist"
-command = "pnpm run build"
+publish = ".output/public"
+command = "pnpm run generate"
 
 [build.environment]
 NODE_VERSION = "22"
+PNPM_VERSION = "10.7.1"
 
 [[redirects]]
 from = "/*"
