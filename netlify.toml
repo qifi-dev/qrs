@@ -4,6 +4,8 @@ command = "pnpm run build"
 
 [build.environment]
 NODE_VERSION = "22"
+PNPM_VERSION = "10.7.1"
+PNPM_FLAGS = "--shamefully-hoist"
 
 [[redirects]]
 from = "/*"

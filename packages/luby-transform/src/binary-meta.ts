@@ -78,14 +78,9 @@ export function readFileHeaderMetaFromBuffer(buffer: Uint8Array): [data: Uint8Ar
 }
 
 export function stringToUint8Array(str: string): Uint8Array {
-  const data = new Uint8Array(str.length)
-  for (let i = 0; i < str.length; i++) {
-    data[i] = str.charCodeAt(i)
-  }
-
-  return data
+  return new TextEncoder().encode(str)
 }
 
 export function uint8ArrayToString(data: Uint8Array): string {
-  return String.fromCharCode(...data)
+  return new TextDecoder().decode(data)
 }

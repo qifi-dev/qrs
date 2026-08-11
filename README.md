@@ -51,6 +51,17 @@ Scientists have already achieved very mature research results on how to efficien
 
 <video src="https://github.com/user-attachments/assets/b4f8a122-02c7-4754-9ec0-121e42f8b22d"></video>
 
+## Export an animated GIF
+
+After selecting a file on the **Send** page, expand **Save QR sequence as GIF**.
+Choose the number of frames, playback speed, and image size, then select
+**Export GIF**. The export uses a separate fountain-code encoder, so it does not
+change the live QR stream. GIF encoding is loaded only when it is needed and
+the QR modules are written directly as lossless black-and-white pixels.
+
+For reliable recovery, use at least the recommended frame count shown in the
+export panel. Larger files may need more frames and produce a larger GIF.
+
 ## Build & run
 
 **1. Install Dependencies**
@@ -82,6 +93,18 @@ Alternatively, if you want to run the development server to test changes:
 ```bash
 pnpm run dev
 ```
+
+### Deploy to Netlify
+
+This repository includes a `netlify.toml` configured for static deployment:
+
+- Build command: `pnpm run generate`
+- Publish directory: `.output/public`
+- Node.js: 22
+- pnpm: 10.7.1
+
+Import the repository in Netlify and deploy it. Netlify reads these settings
+automatically; no additional build settings are required.
 
 **3. Serve the Project Locally**
 

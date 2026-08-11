@@ -42,8 +42,8 @@ const { bytesRate: fps } = useBytesRate(shutterCount, {
   maxDataPoints: 100,
 })
 
-const { devices } = useDevicesList({
-  requestPermissions: true,
+const { devices, ensurePermissions, permissionGranted } = useDevicesList({
+  requestPermissions: false,
   constraints: {
     audio: false,
     video: true,
@@ -51,42 +51,87 @@ const { devices } = useDevicesList({
 })
 
 const cameraSignalStatus = ref(CameraSignalStatus.Waiting)
-const cameras = computed(() => devices.value.filter(i => i.kind === 'videoinput'))
-const selectedCamera = useLocalStorage('qrs-selected-camera', cameras.value[0]?.deviceId)
+const cameras = computed(() => devices.value.filter(i => i.kind === 'videoinput' && i.deviceId))
+const selectedCamera = useLocalStorage<string | undefined>('qrs-selected-camera', undefined)
+const activeCamera = ref<string>()
+const isCameraOpen = ref(false)
+const isOpeningCamera = ref(false)
+const isRequestingCameraPermission = ref(false)
 
 watchEffect(() => {
-  if (!selectedCamera.value)
-    selectedCamera.value = cameras.value[0]?.deviceId
+  if (selectedCamera.value === '')
+    selectedCamera.value = undefined
+
+  if (!cameras.value.length)
+    return
+
+  const selectedCameraExists = cameras.value.some(camera => camera.deviceId === selectedCamera.value)
+  if (selectedCamera.value && !selectedCameraExists)
+    selectedCamera.value = undefined
 })
 
 // const results = defineModel<Set<string>>('results', { default: new Set() })
 
 let qrScanner: QrScanner | undefined
-
-watch(cameras, () => {
-  if (selectedCamera.value && cameras.value.find(i => i.deviceId === selectedCamera.value)) {
-    setTimeout(() => {
-      qrScanner?.setCamera(selectedCamera.value!)
-      qrScanner?.start()
-    }, 250)
-  }
-})
+let cameraStartRequest = 0
 
 const error = ref<any>()
 const video = shallowRef<HTMLVideoElement>()
 const videoWidth = ref(0)
 const videoHeight = ref(0)
 
-onMounted(async () => {
-  watch([
-    () => props.maxScansPerSecond,
-    selectedCamera,
-  ], async ([maxScansPerSecond]) => {
-    if (qrScanner) {
-      qrScanner.destroy()
-      await new Promise(resolve => setTimeout(resolve, 1000))
+async function requestCameraPermission() {
+  if (isRequestingCameraPermission.value)
+    return
+
+  isRequestingCameraPermission.value = true
+  error.value = undefined
+
+  try {
+    const granted = await ensurePermissions()
+    if (!granted) {
+      cameraSignalStatus.value = CameraSignalStatus.NotGranted
+      throw new Error('Camera permission was not granted')
     }
-    qrScanner = new QrScanner(video.value!, async (result) => {
+
+    // Refresh explicitly because some mobile browsers do not emit a devicechange
+    // event when camera permission is granted for the first time.
+    devices.value = await navigator.mediaDevices.enumerateDevices()
+
+    if (!cameras.value.length)
+      throw new Error('No camera was found')
+  }
+  catch (e) {
+    console.error(e)
+    error.value = e
+  }
+  finally {
+    isRequestingCameraPermission.value = false
+  }
+}
+
+async function openSelectedCamera() {
+  const cameraId = selectedCamera.value
+  if (!cameraId || isOpeningCamera.value)
+    return
+
+  const request = ++cameraStartRequest
+  isOpeningCamera.value = true
+  isCameraOpen.value = false
+  activeCamera.value = undefined
+  cameraSignalStatus.value = CameraSignalStatus.Waiting
+  error.value = undefined
+
+  qrScanner?.destroy()
+  qrScanner = undefined
+
+  try {
+    await nextTick()
+
+    if (!video.value)
+      throw new Error('Camera preview is not ready')
+
+    const scanner = new QrScanner(video.value, async (result) => {
       try {
         await scanFrame(result)
       }
@@ -95,7 +140,7 @@ onMounted(async () => {
         console.error(e)
       }
     }, {
-      maxScansPerSecond,
+      maxScansPerSecond: props.maxScansPerSecond,
       highlightCodeOutline: false,
       highlightScanRegion: true,
       calculateScanRegion: ({ videoHeight, videoWidth }) => {
@@ -107,7 +152,7 @@ onMounted(async () => {
           height: size,
         }
       },
-      preferredCamera: selectedCamera.value,
+      preferredCamera: cameraId,
       onDecodeError(e) {
         if (e && e.toString && !e.toString().includes('No QR code found')) {
           console.error(e)
@@ -115,24 +160,67 @@ onMounted(async () => {
         }
       },
     })
-    selectedCamera.value && setTimeout(() => {
-      qrScanner!.setCamera(selectedCamera.value!)
-    })
-    qrScanner.setInversionMode('both')
-    qrScanner.start()
-    updateCameraStatus()
-  }, { immediate: true })
-  watch(selectedCamera, () => {
-    if (qrScanner && selectedCamera.value) {
-      qrScanner.setCamera(selectedCamera.value)
-      qrScanner.start()
+    qrScanner = scanner
+    scanner.setInversionMode('both')
+    await scanner.setCamera(cameraId)
+
+    if (request !== cameraStartRequest || scanner !== qrScanner)
+      return
+
+    await scanner.start()
+
+    if (request !== cameraStartRequest || scanner !== qrScanner) {
+      scanner.destroy()
+      return
     }
+
+    activeCamera.value = cameraId
+    isCameraOpen.value = true
+    error.value = undefined
+    updateCameraStatus()
+  }
+  catch (e) {
+    if (request !== cameraStartRequest)
+      return
+
+    console.error(e)
+    qrScanner?.destroy()
+    qrScanner = undefined
+    activeCamera.value = undefined
+    isCameraOpen.value = false
+    error.value = e
+
+    if ((e as Error).name === 'NotAllowedError' || (e as Error).name === 'NotFoundError')
+      cameraSignalStatus.value = CameraSignalStatus.NotGranted
+  }
+  finally {
+    if (request === cameraStartRequest)
+      isOpeningCamera.value = false
+  }
+}
+
+function closeCamera() {
+  cameraStartRequest++
+  qrScanner?.destroy()
+  qrScanner = undefined
+  isOpeningCamera.value = false
+  isCameraOpen.value = false
+  activeCamera.value = undefined
+  cameraSignalStatus.value = CameraSignalStatus.Waiting
+  videoWidth.value = 0
+  videoHeight.value = 0
+}
+
+onMounted(() => {
+  watch(() => props.maxScansPerSecond, () => {
+    if (isCameraOpen.value)
+      openSelectedCamera()
   })
   useIntervalFn(() => {
     updateCameraStatus()
   }, 250)
 })
-onUnmounted(() => qrScanner && qrScanner.destroy())
+onUnmounted(closeCamera)
 
 async function updateCameraStatus() {
   try {
@@ -141,8 +229,11 @@ async function updateCameraStatus() {
       return
     }
 
-    videoHeight.value = video.value!.videoHeight
-    videoWidth.value = video.value!.videoWidth
+    if ((!isCameraOpen.value && !isOpeningCamera.value) || !video.value)
+      return
+
+    videoHeight.value = video.value.videoHeight
+    videoWidth.value = video.value.videoWidth
 
     if (videoWidth.value === 0 || videoHeight.value === 0) {
       cameraSignalStatus.value = CameraSignalStatus.Waiting
@@ -292,14 +383,13 @@ async function scanFrame(result: QrScanner.ScanResult) {
   decoderStatus.value = await decoderWorker.getStatus()
   status.value = getStatus()
   if (success) {
-    endTime.value = now()
-
     const merged = (await decoderWorker.getDecoded())!
     const [mergedData, meta] = readFileHeaderMetaFromBuffer(merged)
     dataUrl.value = toDataURL(mergedData, meta.contentType)
 
     filename.value = meta.filename
     contentType.value = meta.contentType
+    endTime.value = now()
 
     if (contentType.value.startsWith('text/')) {
       const text = new TextDecoder().decode(mergedData)
@@ -338,18 +428,57 @@ function now() {
     <pre v-if="error" overflow-x-auto text-red v-text="error" />
 
     <Collapsable label="Cameras" :default="true">
-      <div w-full flex flex-wrap gap-2 p2>
-        <button
-          v-for="(item, index) of cameras" :key="item.deviceId" :class="{
-            'text-blue bg-blue/20': selectedCamera === item.deviceId,
-          }"
-          px2 py1 text-sm shadow-sm
-          border="~ gray/25 rounded-lg"
-          @click="selectedCamera = item.deviceId"
-        >
-          <span i-carbon-camera mr-1 inline-block align-text-top />
-          {{ item.label || `Camera ${index + 1}` }}
-        </button>
+      <div w-full flex flex-col gap-3 p2>
+        <div flex flex-wrap gap-2>
+          <button
+            v-for="(item, index) of cameras" :key="item.deviceId" :class="{
+              'text-blue bg-blue/20': selectedCamera === item.deviceId,
+            }"
+            px2 py1 text-sm shadow-sm
+            border="~ gray/25 rounded-lg"
+            @click="selectedCamera = item.deviceId"
+          >
+            <span i-carbon-camera mr-1 inline-block align-text-top />
+            {{ item.label || `Camera ${index + 1}` }}
+          </button>
+          <span v-if="!cameras.length" text-sm text-neutral-500>
+            {{ permissionGranted ? 'No cameras found' : 'Camera access is required to list available cameras' }}
+          </span>
+        </div>
+
+        <div flex flex-wrap gap-2>
+          <button
+            v-if="!cameras.length && !permissionGranted"
+            :disabled="isRequestingCameraPermission"
+            bg-blue px3 py1 text-sm text-white shadow-sm
+            border="~ blue rounded-lg"
+            disabled:cursor-not-allowed disabled:op-40
+            @click="requestCameraPermission"
+          >
+            <span :class="isRequestingCameraPermission ? 'i-carbon-circle-dash animate-spin' : 'i-carbon-locked'" mr-1 inline-block align-text-top />
+            {{ isRequestingCameraPermission ? 'Requesting access...' : 'Allow camera access' }}
+          </button>
+          <button
+            v-else-if="cameras.length"
+            :disabled="!selectedCamera || isOpeningCamera"
+            bg-blue px3 py1 text-sm text-white shadow-sm
+            border="~ blue rounded-lg"
+            disabled:cursor-not-allowed disabled:op-40
+            @click="openSelectedCamera"
+          >
+            <span :class="isOpeningCamera ? 'i-carbon-circle-dash animate-spin' : 'i-carbon-play'" mr-1 inline-block align-text-top />
+            {{ isOpeningCamera ? 'Opening...' : isCameraOpen && activeCamera === selectedCamera ? 'Restart camera' : isCameraOpen ? 'Switch camera' : 'Open camera' }}
+          </button>
+          <button
+            v-if="isCameraOpen || isOpeningCamera"
+            px3 py1 text-sm shadow-sm
+            border="~ gray/25 rounded-lg"
+            @click="closeCamera"
+          >
+            <span i-carbon-stop-filled mr-1 inline-block align-text-top />
+            Close camera
+          </button>
+        </div>
       </div>
     </Collapsable>
 
@@ -400,6 +529,7 @@ function now() {
     </div>
 
     <Camera
+      v-if="isCameraOpen || isOpeningCamera"
       :k="k"
       :fps="fps"
       :bytes="bytes"
@@ -414,6 +544,13 @@ function now() {
         autoplay muted playsinline h-full w-full rounded-lg
       />
     </Camera>
+    <div
+      v-else min-h-60 flex flex-col items-center justify-center gap-2 rounded-lg text-neutral-500
+      border="~ gray/25"
+    >
+      <span i-carbon-camera-off text-3xl />
+      <p>Select a camera, then click Open camera</p>
+    </div>
 
     <Collapsable label="Inspect">
       <div grid-cols="[150px_1fr]" font="mono!" :class="endTime ? 'text-green-500' : ''" grid gap-x-4 gap-y-2 overflow-x-auto whitespace-nowrap p2 text-sm>
