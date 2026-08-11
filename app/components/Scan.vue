@@ -42,7 +42,7 @@ const { bytesRate: fps } = useBytesRate(shutterCount, {
   maxDataPoints: 100,
 })
 
-const { devices } = useDevicesList({
+const { devices, ensurePermissions, permissionGranted } = useDevicesList({
   requestPermissions: false,
   constraints: {
     audio: false,
@@ -51,13 +51,17 @@ const { devices } = useDevicesList({
 })
 
 const cameraSignalStatus = ref(CameraSignalStatus.Waiting)
-const cameras = computed(() => devices.value.filter(i => i.kind === 'videoinput'))
+const cameras = computed(() => devices.value.filter(i => i.kind === 'videoinput' && i.deviceId))
 const selectedCamera = useLocalStorage<string | undefined>('qrs-selected-camera', undefined)
 const activeCamera = ref<string>()
 const isCameraOpen = ref(false)
 const isOpeningCamera = ref(false)
+const isRequestingCameraPermission = ref(false)
 
 watchEffect(() => {
+  if (selectedCamera.value === '')
+    selectedCamera.value = undefined
+
   if (!cameras.value.length)
     return
 
@@ -75,6 +79,36 @@ const error = ref<any>()
 const video = shallowRef<HTMLVideoElement>()
 const videoWidth = ref(0)
 const videoHeight = ref(0)
+
+async function requestCameraPermission() {
+  if (isRequestingCameraPermission.value)
+    return
+
+  isRequestingCameraPermission.value = true
+  error.value = undefined
+
+  try {
+    const granted = await ensurePermissions()
+    if (!granted) {
+      cameraSignalStatus.value = CameraSignalStatus.NotGranted
+      throw new Error('Camera permission was not granted')
+    }
+
+    // Refresh explicitly because some mobile browsers do not emit a devicechange
+    // event when camera permission is granted for the first time.
+    devices.value = await navigator.mediaDevices.enumerateDevices()
+
+    if (!cameras.value.length)
+      throw new Error('No camera was found')
+  }
+  catch (e) {
+    console.error(e)
+    error.value = e
+  }
+  finally {
+    isRequestingCameraPermission.value = false
+  }
+}
 
 async function openSelectedCamera() {
   const cameraId = selectedCamera.value
@@ -407,11 +441,25 @@ function now() {
             <span i-carbon-camera mr-1 inline-block align-text-top />
             {{ item.label || `Camera ${index + 1}` }}
           </button>
-          <span v-if="!cameras.length" text-sm text-neutral-500>No cameras found</span>
+          <span v-if="!cameras.length" text-sm text-neutral-500>
+            {{ permissionGranted ? 'No cameras found' : 'Camera access is required to list available cameras' }}
+          </span>
         </div>
 
         <div flex flex-wrap gap-2>
           <button
+            v-if="!cameras.length && !permissionGranted"
+            :disabled="isRequestingCameraPermission"
+            bg-blue px3 py1 text-sm text-white shadow-sm
+            border="~ blue rounded-lg"
+            disabled:cursor-not-allowed disabled:op-40
+            @click="requestCameraPermission"
+          >
+            <span :class="isRequestingCameraPermission ? 'i-carbon-circle-dash animate-spin' : 'i-carbon-locked'" mr-1 inline-block align-text-top />
+            {{ isRequestingCameraPermission ? 'Requesting access...' : 'Allow camera access' }}
+          </button>
+          <button
+            v-else-if="cameras.length"
             :disabled="!selectedCamera || isOpeningCamera"
             bg-blue px3 py1 text-sm text-white shadow-sm
             border="~ blue rounded-lg"
