@@ -55,37 +55,60 @@ const cameras = computed(() => devices.value.filter(i => i.kind === 'videoinput'
 const selectedCamera = useLocalStorage('qrs-selected-camera', cameras.value[0]?.deviceId)
 
 watchEffect(() => {
-  if (!selectedCamera.value)
-    selectedCamera.value = cameras.value[0]?.deviceId
+  if (!cameras.value.length)
+    return
+
+  const selectedCameraExists = cameras.value.some(camera => camera.deviceId === selectedCamera.value)
+  if (!selectedCamera.value || !selectedCameraExists)
+    selectedCamera.value = cameras.value[0]!.deviceId
 })
 
 // const results = defineModel<Set<string>>('results', { default: new Set() })
 
 let qrScanner: QrScanner | undefined
-
-watch(cameras, () => {
-  if (selectedCamera.value && cameras.value.find(i => i.deviceId === selectedCamera.value)) {
-    setTimeout(() => {
-      qrScanner?.setCamera(selectedCamera.value!)
-      qrScanner?.start()
-    }, 250)
-  }
-})
+let cameraStartRequest = 0
 
 const error = ref<any>()
 const video = shallowRef<HTMLVideoElement>()
 const videoWidth = ref(0)
 const videoHeight = ref(0)
 
+async function startSelectedCamera() {
+  const scanner = qrScanner
+  if (!scanner)
+    return
+
+  const request = ++cameraStartRequest
+  const cameraId = selectedCamera.value
+
+  try {
+    await nextTick()
+    if (cameraId && cameras.value.some(camera => camera.deviceId === cameraId))
+      await scanner.setCamera(cameraId)
+
+    if (request !== cameraStartRequest || scanner !== qrScanner)
+      return
+
+    await scanner.start()
+    error.value = undefined
+    updateCameraStatus()
+  }
+  catch (e) {
+    if (request !== cameraStartRequest || scanner !== qrScanner)
+      return
+
+    console.error(e)
+    error.value = e
+  }
+}
+
 onMounted(async () => {
-  watch([
-    () => props.maxScansPerSecond,
-    selectedCamera,
-  ], async ([maxScansPerSecond]) => {
-    if (qrScanner) {
-      qrScanner.destroy()
-      await new Promise(resolve => setTimeout(resolve, 1000))
-    }
+  watch(() => props.maxScansPerSecond, async (maxScansPerSecond) => {
+    cameraStartRequest++
+    qrScanner?.destroy()
+    qrScanner = undefined
+    await nextTick()
+
     qrScanner = new QrScanner(video.value!, async (result) => {
       try {
         await scanFrame(result)
@@ -115,19 +138,10 @@ onMounted(async () => {
         }
       },
     })
-    selectedCamera.value && setTimeout(() => {
-      qrScanner!.setCamera(selectedCamera.value!)
-    })
     qrScanner.setInversionMode('both')
-    qrScanner.start()
-    updateCameraStatus()
+    await startSelectedCamera()
   }, { immediate: true })
-  watch(selectedCamera, () => {
-    if (qrScanner && selectedCamera.value) {
-      qrScanner.setCamera(selectedCamera.value)
-      qrScanner.start()
-    }
-  })
+  watch([selectedCamera, cameras], startSelectedCamera, { flush: 'post' })
   useIntervalFn(() => {
     updateCameraStatus()
   }, 250)
