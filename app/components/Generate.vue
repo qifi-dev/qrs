@@ -30,9 +30,11 @@ const renderTime = ref(0)
 const framePerSecond = computed(() => 1000 / renderTime.value)
 const bytes = useKiloBytesNumberFormat(computed(() => ((block.value?.bytes || 0) / 1024).toFixed(2)))
 
+const GIF_SIZE_OPTIONS = [256, 384, 512, 768, 1024]
+const DEFAULT_GIF_SIZE = 512
 const gifFrameCount = ref(60)
 const gifFps = ref(10)
-const gifSize = ref(384)
+const gifSize = ref(DEFAULT_GIF_SIZE)
 const isExporting = ref(false)
 const exportProgress = ref(0)
 const exportError = ref('')
@@ -84,8 +86,8 @@ async function exportGif() {
 
   gifFrameCount.value = Math.min(500, Math.max(10, Math.round(Number(gifFrameCount.value) || recommendedFrameCount.value)))
   gifFps.value = Math.min(30, Math.max(1, Math.round(Number(gifFps.value) || 10)))
-  if (![256, 384, 512].includes(gifSize.value))
-    gifSize.value = 384
+  if (!GIF_SIZE_OPTIONS.includes(gifSize.value))
+    gifSize.value = DEFAULT_GIF_SIZE
 
   isExporting.value = true
   cancelExportRequested.value = false
@@ -213,9 +215,9 @@ watch(recommendedFrameCount, (recommended, previous) => {
               border="~ gray/25 rounded-lg"
               bg="transparent dark:neutral-900" px-2 py-1
             >
-              <option :value="256">256 × 256</option>
-              <option :value="384">384 × 384</option>
-              <option :value="512">512 × 512</option>
+              <option v-for="size in GIF_SIZE_OPTIONS" :key="size" :value="size">
+                {{ size }} × {{ size }}
+              </option>
             </select>
           </label>
         </div>
