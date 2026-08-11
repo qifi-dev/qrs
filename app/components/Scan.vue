@@ -292,14 +292,13 @@ async function scanFrame(result: QrScanner.ScanResult) {
   decoderStatus.value = await decoderWorker.getStatus()
   status.value = getStatus()
   if (success) {
-    endTime.value = now()
-
     const merged = (await decoderWorker.getDecoded())!
     const [mergedData, meta] = readFileHeaderMetaFromBuffer(merged)
     dataUrl.value = toDataURL(mergedData, meta.contentType)
 
     filename.value = meta.filename
     contentType.value = meta.contentType
+    endTime.value = now()
 
     if (contentType.value.startsWith('text/')) {
       const text = new TextDecoder().decode(mergedData)
