@@ -19,6 +19,8 @@ export const DEFAULT_ROBUST_DELTA = 0.5
  * Element `d - 1` is the probability of degree `d`.
  */
 export function idealSoliton(k: number): number[] {
+  if (!(k >= 1))
+    return []
   const pmf = Array.from<number>({ length: k }).fill(0)
   pmf[0] = 1 / k
   for (let d = 2; d <= k; d++)
@@ -31,16 +33,25 @@ export function idealSoliton(k: number): number[] {
  *
  * `c` and `delta` are the usual tuning constants: larger `c` adds more low
  * degree blocks (and a spike at `k / R`), `delta` bounds the failure probability.
+ * Parameters that make `R` non-positive (e.g. `c = 0`, `delta >= k`) fall back
+ * to the Ideal Soliton distribution. When `k / R > k` the spike lies outside
+ * `1..k` and is omitted; when `k / R < 1` it is placed at degree 1.
  */
 export function robustSoliton(k: number, c = DEFAULT_ROBUST_C, delta = DEFAULT_ROBUST_DELTA): number[] {
   const rho = idealSoliton(k)
   const R = c * Math.log(k / delta) * Math.sqrt(k)
-  const spike = Math.max(1, Math.min(k, Math.floor(k / R)))
-  const tau = Array.from<number>({ length: k }).fill(0)
-  for (let d = 1; d < spike; d++)
-    tau[d - 1] = R / (d * k)
-  tau[spike - 1] = R * Math.log(R / delta) / k
-  return normalize(rho.map((p, i) => p + Math.max(0, tau[i]!)))
+  if (!(R > 0) || !Number.isFinite(R))
+    return rho
+  const spike = Math.max(1, Math.floor(k / R))
+  const tau = rho.map((_, i) => {
+    const d = i + 1
+    if (d < spike)
+      return R / (d * k)
+    if (d === spike)
+      return Math.max(0, R * Math.log(R / delta) / k)
+    return 0
+  })
+  return normalize(rho.map((p, i) => p + tau[i]!))
 }
 
 /**
@@ -48,6 +59,8 @@ export function robustSoliton(k: number, c = DEFAULT_ROBUST_C, delta = DEFAULT_R
  * `maxDegree` itself so low degrees keep their original weight.
  */
 export function truncateDistribution(pmf: number[], maxDegree: number): number[] {
+  if (!pmf.length)
+    return []
   const cap = Math.min(pmf.length, maxDegree >= 1 ? Math.floor(maxDegree) : 1)
   const result = pmf.slice(0, cap)
   result[cap - 1] = pmf.slice(cap - 1).reduce((a, b) => a + b, 0)
@@ -82,9 +95,12 @@ export function createDegreeSampler(pmf: number[], random: () => number): () => 
 }
 
 /**
- * Picks `degree` distinct indices in `0..k-1`. `degree` is clamped to `k`.
+ * Picks `degree` distinct indices in `0..k-1`. `degree` is clamped to `[1, k]`;
+ * with no source blocks (`k = 0`, empty uncompressed input) it returns `[]`.
  */
 export function sampleIndices(k: number, degree: number, random: () => number): number[] {
+  if (!(k >= 1))
+    return []
   const count = Math.max(1, Math.min(k, degree))
   if (count * 2 > k) {
     const all = Array.from({ length: k }, (_, i) => i)

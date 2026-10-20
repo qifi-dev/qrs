@@ -1,6 +1,7 @@
 import type { EncodedBlock } from '../src'
 import { describe, expect, it } from 'vitest'
 import { binaryToBlock, blockToBinary, createDecoder, createEncoder, DEFAULT_MAX_DEGREE } from '../src'
+import { idealSoliton, robustSoliton, sampleIndices, truncateDistribution } from '../src/degree'
 import { mulberry32 } from './prng'
 
 function randomData(length: number, random: () => number) {
@@ -127,6 +128,57 @@ describe('wire format', () => {
         data: block.data,
       })
       expect(binaryToBlock(binary)).toEqual(frame)
+    }
+  })
+})
+
+describe('degree distributions', () => {
+  const sum = (pmf: number[]) => pmf.reduce((a, b) => a + b, 0)
+
+  it.each([
+    [10, 0, 0.5],
+    [10, 0.1, 10],
+    [10, 0.1, 100],
+    [1, 0.2, 0.5],
+  ])('robustSoliton(%i, %s, %s) is a valid distribution', (k, c, delta) => {
+    const pmf = robustSoliton(k, c, delta)
+    expect(pmf).toHaveLength(k)
+    expect(pmf.every(p => Number.isFinite(p) && p >= 0)).toBe(true)
+    expect(sum(pmf)).toBeCloseTo(1)
+  })
+
+  it('falls back to ideal soliton when R is not positive', () => {
+    expect(robustSoliton(10, 0, 0.5)).toEqual(idealSoliton(10))
+  })
+
+  it('omits the spike when k / R is beyond k', () => {
+    const k = 2
+    const c = 0.01
+    const delta = 0.5
+    const R = c * Math.log(k / delta) * Math.sqrt(k)
+    expect(k / R).toBeGreaterThan(k)
+    const raw = [1 / 2 + R / k, 1 / 2 + R / (2 * k)]
+    const total = raw[0]! + raw[1]!
+    const pmf = robustSoliton(k, c, delta)
+    expect(pmf[0]).toBeCloseTo(raw[0]! / total, 12)
+    expect(pmf[1]).toBeCloseTo(raw[1]! / total, 12)
+  })
+
+  it('returns no distribution or indices for k = 0', () => {
+    expect(idealSoliton(0)).toEqual([])
+    expect(robustSoliton(0)).toEqual([])
+    expect(truncateDistribution([], 32)).toEqual([])
+    expect(sampleIndices(0, 1, mulberry32(1))).toEqual([])
+  })
+})
+
+describe('empty input', () => {
+  it('never produces out-of-range indices when k = 0', () => {
+    const encoder = createEncoder(new Uint8Array(0), 10, { compress: false, random: mulberry32(8) })
+    expect(encoder.k).toBe(0)
+    for (const block of take(encoder.fountain(), 10)) {
+      expect(block.indices).toEqual([])
+      expect(binaryToBlock(blockToBinary(block)).indices).toEqual([])
     }
   })
 })
