@@ -1,4 +1,5 @@
 export * from './binary-meta'
 export * from './decoder'
+export { DEFAULT_MAX_DEGREE } from './degree'
 export * from './encoder'
 export * from './shared'
