@@ -40,6 +40,15 @@ describe('findRearCamera', () => {
   it('prefers the main rear lens over special lenses', () => {
     expect(findRearCamera([front, backUltraWide, back])).toBe('back')
     expect(findRearCamera([front, backUltraWide])).toBe('back-uw')
+    expect(findRearCamera([{ deviceId: 'tele', label: 'Back Telephoto Camera' }, back])).toBe('back')
+    expect(findRearCamera([{ deviceId: 'dual', label: 'Back Dual Camera' }, back])).toBe('back')
+  })
+
+  it('prefers iPhone virtual cameras that auto-switch to macro for close QR codes', () => {
+    const dualWide = { deviceId: 'dual-wide', label: 'Back Dual Wide Camera' }
+    const triple = { deviceId: 'triple', label: 'Back Triple Camera' }
+    expect(findRearCamera([front, back, backUltraWide, dualWide])).toBe('dual-wide')
+    expect(findRearCamera([front, back, dualWide, triple])).toBe('triple')
   })
 
   it('returns undefined when there is no recognizable rear camera', () => {

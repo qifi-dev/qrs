@@ -3,7 +3,7 @@ import { toUint8Array } from 'js-base64'
 import { binaryToBlock, readFileHeaderMetaFromBuffer } from 'luby-transform'
 import QrScanner from 'qr-scanner'
 
-import { resolvePreferredCamera, resolveRearCameraFallback } from '~~/utils/camera'
+import { createCameraQueue, resolvePreferredCamera } from '~~/utils/camera'
 import { useKiloBytesNumberFormat } from '~/composables/intlNumberFormat'
 import { createLTDecodeWorker } from '~/composables/lt-decode'
 import { useBytesRate } from '~/composables/timeseries'
@@ -64,13 +64,42 @@ const video = shallowRef<HTMLVideoElement>()
 const videoWidth = ref(0)
 const videoHeight = ref(0)
 
+const cameraQueue = createCameraQueue({
+  getPreferredCamera: () => preferredCamera.value,
+  listCameras: async () => {
+    await updateDevices()
+    return cameras.value
+  },
+  getActiveSettings: getActiveCameraSettings,
+  switchCamera: async id => qrScanner?.setCamera(id),
+  onSettled(deviceId) {
+    activeCamera.value = deviceId
+    updateCameraStatus()
+  },
+  onError(e) {
+    console.error(e)
+    error.value = e
+    updateCameraStatus()
+  },
+})
+
+/** Forget a stored choice once permission-granted enumeration shows the camera is gone. */
+watch(preferredCamera, (camera) => {
+  if (selectedCamera.value && camera === 'environment' && cameras.value.some(i => i.label))
+    selectedCamera.value = ''
+})
+
 onMounted(async () => {
+  localStorage.removeItem('qrs-selected-camera')
   useEventListener(navigator.mediaDevices, 'devicechange', updateDevices)
   updateDevices()
-  watch(() => props.maxScansPerSecond, async (maxScansPerSecond) => {
+  watch(() => props.maxScansPerSecond, maxScansPerSecond => cameraQueue.run(async (isDisposed) => {
     if (qrScanner) {
       qrScanner.destroy()
+      qrScanner = undefined
       await new Promise(resolve => setTimeout(resolve, 1000))
+      if (isDisposed())
+        return
     }
     qrScanner = new QrScanner(video.value!, async (result) => {
       try {
@@ -102,45 +131,29 @@ onMounted(async () => {
       },
     })
     qrScanner.setInversionMode('both')
-    await openCamera(scanner => scanner.start())
-  }, { immediate: true })
-  watch(preferredCamera, camera => openCamera(scanner => scanner.setCamera(camera)))
+    await qrScanner.start()
+  }), { immediate: true })
+  watch(preferredCamera, camera => cameraQueue.run(async () => qrScanner?.setCamera(camera)))
   useIntervalFn(() => {
     updateCameraStatus()
   }, 250)
 })
-onUnmounted(() => qrScanner && qrScanner.destroy())
-
-/**
- * Run a scanner action that (re)opens the camera stream, then refresh the device list
- * (labels only become available after permission is granted) and, when no camera was
- * picked by the user, switch to a labelled rear camera if the browser ignored the
- * `environment` facing mode.
- */
-async function openCamera(action: (scanner: QrScanner) => Promise<void>) {
-  try {
-    if (!qrScanner)
-      return
-    await action(qrScanner)
-    await updateDevices()
-    const rear = selectedCamera.value ? undefined : resolveRearCameraFallback(getActiveCameraSettings(), cameras.value)
-    if (rear)
-      await qrScanner.setCamera(rear)
-    activeCamera.value = getActiveCameraSettings().deviceId
-  }
-  catch (e) {
-    console.error(e)
-    error.value = e
-  }
-  updateCameraStatus()
-}
+onUnmounted(() => {
+  cameraQueue.dispose()
+  qrScanner?.destroy()
+})
 
 /**
  * Enumerate devices without requesting permission ourselves; requesting it here would
  * open a second stream next to the scanner's and cause extra permission prompts.
  */
 async function updateDevices() {
-  devices.value = await navigator.mediaDevices?.enumerateDevices() ?? []
+  try {
+    devices.value = await navigator.mediaDevices?.enumerateDevices() ?? []
+  }
+  catch (e) {
+    console.error(e)
+  }
 }
 
 function getActiveCameraSettings(): MediaTrackSettings {
