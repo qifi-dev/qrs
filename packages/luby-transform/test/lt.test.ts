@@ -4,19 +4,20 @@ import { join } from 'node:path'
 import { fromUint8Array, toUint8Array } from 'js-base64'
 import { expect, it } from 'vitest'
 import { binaryToBlock, blockToBinary, createDecoder, createEncoder } from '../src'
+import { mulberry32 } from './prng'
 
 const list: {
   name: string
   data: Uint8Array
   only?: boolean
-  repeats?: number
+  runs?: number
   size?: number
 }[] = [
   {
     name: 'generated-1',
     data: new Uint8Array(1).fill(23),
     // only: true,
-    // repeats: 0,
+    // runs: 1,
   },
   {
     name: 'generated-2',
@@ -40,42 +41,45 @@ for (const item of list) {
   const {
     data,
     name,
-    repeats = 10,
+    runs = 10,
     size = 1000,
   } = item
 
-  test(`slice binary: ${name} (size: ${size})`, { repeats }, async () => {
-    const encoder = createEncoder(data, size)
-    const decoder = createDecoder()
+  test(`slice binary: ${name} (size: ${size})`, async () => {
+    const rates: number[] = []
 
-    let count = 0
+    // Seeded so the overhead assertion is deterministic instead of flaky
+    for (let seed = 1; seed <= runs; seed++) {
+      const encoder = createEncoder(data, size, { random: mulberry32(seed) })
+      const decoder = createDecoder()
 
-    for (const block of encoder.fountain()) {
-      count += 1
-      const rate = count / encoder.k
-      if (rate > 10) {
-        throw new Error('Too many blocks, aborting')
+      let count = 0
+
+      for (const block of encoder.fountain()) {
+        count += 1
+        const rate = count / encoder.k
+        if (rate > 10) {
+          throw new Error('Too many blocks, aborting')
+        }
+        const binary = blockToBinary(block)
+        const str = fromUint8Array(binary)
+        // Use the str to transfer
+
+        const b2 = toUint8Array(str)
+        const back = binaryToBlock(b2)
+        const result = decoder.addBlock(back)
+        if (result)
+          break
       }
-      const binary = blockToBinary(block)
-      const str = fromUint8Array(binary)
-      // Use the str to transfer
 
-      const b2 = toUint8Array(str)
-      const back = binaryToBlock(b2)
-      const result = decoder.addBlock(back)
-      if (result)
-        break
+      const result = decoder.getDecoded()!
+      expect(result).toBeDefined()
+      expect(result).toBeInstanceOf(Uint8Array)
+      expect(result.length).toBe(data.length)
+
+      rates.push(+(count / encoder.k * 100).toFixed(2))
     }
 
-    const result = decoder.getDecoded()!
-    expect(result).toBeDefined()
-    expect(result).toBeInstanceOf(Uint8Array)
-    expect(result.length).toBe(data.length)
-
-    expect(
-      +(count / encoder.k * 100).toFixed(2),
-      'Data rate should be less than 200%',
-    )
-      .toBeLessThan(250) // TODO: target 180%
+    expect(Math.max(...rates), 'Data rate should be less than 180%').toBeLessThan(180)
   })
 }
