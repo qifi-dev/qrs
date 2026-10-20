@@ -49,6 +49,12 @@ Stream file with custom chunk size
 npx qifi -ICS=1000 ./file.txt
 ```
 
+Limit how many slices are combined into one QR code (default is 32). Each combined slice adds 4 bytes to the QR code header.
+
+```bash
+npx qifi --max-degree 16 ./file.txt
+```
+
 You can use any scanner to scan the dynamic QR code. This will redirect to [a scanner website in the browser](https://qrss.netlify.app) to actually obtain the file data from the QR code.
 
 ## Demo

@@ -45,6 +45,10 @@ const generaterSvg = createGeneraterSVG(new Uint8Array(file.buffer))
 const generaterANSI = createGeneraterANSI(new Uint8Array(file.buffer), {
   // Size of each data slice
   sliceSize: 250,
+  // Compress data before slicing, default is true
+  compress: true,
+  // Max number of slices combined into one QR code, default is 32
+  maxDegree: 32,
   // Error correction level
   ecc: 'L',
   // Border width

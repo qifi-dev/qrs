@@ -136,7 +136,10 @@ Creates a new `LtEncoder` instance for encoding data.
 
 - `data` (`Uint8Array`): The raw data to be encoded.
 - `sliceSize` (`number`): The size of each block.
-- `compress` (`boolean`, optional): Whether to compress the data. Defaults to `true`.
+- `options` (`boolean | LtEncoderOptions`, optional): Encoder options. A plain boolean is treated as `compress` for backward compatibility.
+  - `compress` (`boolean`): Whether to compress the data. Defaults to `true`.
+  - `maxDegree` (`number`): Upper bound for the number of original blocks combined into one encoded block, i.e. the number of `indices` in each frame header. It is clamped to `[1, k]`. Defaults to `DEFAULT_MAX_DEGREE` (`32`). Values below `16` noticeably increase the number of blocks needed for large inputs.
+  - `random` (`() => number`): Source of randomness in `[0, 1)`. Defaults to `Math.random`. Pass a seeded PRNG for reproducible output, e.g. in tests.
 
 #### Returns
 
@@ -153,6 +156,12 @@ const encoder = createEncoder(new TextEncoder().encode('Hello, World!'), 2)
 // Encode a file
 const file = await fs.readFile('path/to/file')
 const encoder = createEncoder(new Uint8Array(file.buffer), 1400)
+
+// Custom options
+const encoder = createEncoder(new Uint8Array(file.buffer), 1400, {
+  compress: false,
+  maxDegree: 16,
+})
 ```
 
 #### Detailed Description
@@ -163,7 +172,9 @@ The `LtEncoder` class constructor processes the data based on the provided param
 
 ### `encoder.fountain`
 
-Generates an infinite sequence of random encoded blocks using the Ideal Soliton Distribution.
+Generates an infinite sequence of random encoded blocks. Degrees follow a Robust Soliton Distribution (`c = 0.2`, `δ = 0.5`) truncated at `maxDegree`, so no block combines more than `maxDegree` original blocks.
+
+The degree distribution is chosen by the sender only. Blocks keep the same binary format, so any decoder that reads that format, including older versions of this package, can decode them.
 
 #### Returns
 
