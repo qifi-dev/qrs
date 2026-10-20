@@ -21,6 +21,7 @@ export const {
     minVersion,
     maxVersion,
     border,
+    maxDegree,
   },
   positional,
 } = getArgs()
@@ -51,6 +52,7 @@ function getArgs() {
     .option('--min-version <version>', 'Minimum version of the QR code (1-40), default is 1')
     .option('--max-version <version>', 'Maximum version of the QR code (1-40), default is 40')
     .option('--border <size>', 'Border around the QR code, default is 1')
+    .option('--max-degree <count>', 'Max number of slices combined into one QR code, default is 32')
     .help()
 
   const result = cli.parse(process.argv)
@@ -119,6 +121,14 @@ function getArgs() {
     }
   }
 
+  let maxDegree: number | undefined
+  if (options.maxDegree) {
+    maxDegree = Number.parseInt(options.maxDegree)
+    if (Number.isNaN(maxDegree) || maxDegree < 1) {
+      handleArgsError(new TypeError('Invalid max degree'))
+    }
+  }
+
   const ecc = options.ecc as QrCodeGenerateSvgOptions['ecc']
 
   return {
@@ -139,6 +149,7 @@ function getArgs() {
       minVersion,
       maxVersion,
       border,
+      maxDegree,
     },
   }
 }
