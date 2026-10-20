@@ -14,6 +14,7 @@ import {
   fps,
   invert,
   maskPattern,
+  maxDegree,
   maxVersion,
   minVersion,
   positional,
@@ -55,6 +56,7 @@ export async function main() {
 
   const generator = chooseGenerater()(merged, {
     sliceSize,
+    maxDegree,
     urlPrefix: prefix,
     ...{
       whiteChar: white,

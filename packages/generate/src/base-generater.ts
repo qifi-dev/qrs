@@ -5,7 +5,10 @@ export function createGeneraterWithRender<Result, RenderOptions>(createRender: C
   return (data: Uint8Array, options?: GeneraterBaseOptions<RenderOptions>) => {
     const _options = Object.assign({}, GeneraterDefaultOptions, options)
 
-    const encoder = createEncoder(data, _options.sliceSize, _options.compress)
+    const encoder = createEncoder(data, _options.sliceSize, {
+      compress: _options.compress,
+      maxDegree: _options.maxDegree,
+    })
 
     let _fountain: ReturnType<typeof encoder.fountain>
 

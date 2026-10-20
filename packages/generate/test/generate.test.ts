@@ -88,3 +88,14 @@ it('should generate SVG QR codes', () => {
   const svg = generater.fountain().next().value
   expect(svg).toMatchFileSnapshot('__snapshots__/svg-qrcode.svg')
 })
+
+it('passes maxDegree to the encoder', () => {
+  const generater = createGeneraterQRCodeArray(new Uint8Array(1000).map((_, i) => i * 7), {
+    sliceSize: 10,
+    compress: false,
+    maxDegree: 3,
+  })
+  expect(generater.encoder.k).toBe(100)
+  expect(generater.encoder.maxDegree).toBe(3)
+  expect(generater.encoder.compress).toBe(false)
+})

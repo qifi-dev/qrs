@@ -6,6 +6,10 @@ export type CreateBlockRenderFn<Result, RenderOptions> = (renderOptions: Generat
 export type GeneraterBaseOptions<RenderOptions> = {
   sliceSize?: number
   compress?: boolean
+  /**
+   * Max number of slices combined into one QR frame, see `LtEncoderOptions.maxDegree`.
+   */
+  maxDegree?: number
   urlPrefix?: string
 } & RenderOptions
 
